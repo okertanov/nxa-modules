@@ -23,6 +23,15 @@ namespace NXABlockListener
 
         void IPersistencePlugin.OnPersist(NeoSystem system, Block block, DataCache snapshot, IReadOnlyList<Blockchain.ApplicationExecuted> applicationExecutedList)
         {
+            System.Console.WriteLine(String.Format("OnPersist block (System network: {0};)", system.Settings.Network));
+            if (system.Settings.Network != Settings.Default.Network) return;
+
+            System.Console.WriteLine(String.Format("Block hash: {0}; Block index: {1}; Block json: {2};", block.Hash, block.Index, block.ToJson(ProtocolSettings.Default).AsString()));
+        }
+
+        void IPersistencePlugin.OnCommit(NeoSystem system, Block block, DataCache snapshot)
+        {
+            System.Console.WriteLine(String.Format("OnCommit block (System network: {0};)", system.Settings.Network));
             if (system.Settings.Network != Settings.Default.Network) return;
 
             System.Console.WriteLine(String.Format("Block hash: {0}; Block index: {1}; Block json: {2};", block.Hash, block.Index, block.ToJson(ProtocolSettings.Default).AsString()));
