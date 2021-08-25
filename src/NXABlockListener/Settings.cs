@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace NXABlockListener
+namespace Nxa.Plugins
 {
     internal class Settings
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
-namespace NXABlockListener
+namespace Nxa.Plugins
 {
     //Non thread blocking write to console 
     public static class ConsoleWriter
