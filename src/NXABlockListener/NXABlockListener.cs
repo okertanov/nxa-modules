@@ -13,31 +13,39 @@ namespace Nxa.Plugins
     {
 
         public override string Name => "NXABlockListener";
-        public override string Description => "Test: Informs abount new blocks";
+        public override string Description => "NXABlockListener informs abount new blocks";
+
+        private RabbitMQ.RabbitMQ rabbitMQ;
 
         protected override void Configure()
         {
             Settings.Load(GetConfiguration());
-            ConsoleWriter.WriteLine(String.Format("NXABlockListener configuration; Network: {0}; Test: {1}", Settings.Default.Network, Settings.Default.Test));
-        }
 
-        void IPersistencePlugin.OnPersist(NeoSystem system, Block block, DataCache snapshot, IReadOnlyList<Blockchain.ApplicationExecuted> applicationExecutedList)
-        {
-            if (system.Settings.Network != Settings.Default.Network) return;
+            if (!Settings.Default.Active)
+            {
+                ConsoleWriter.WriteLine(string.Format("NXABlockListener inactive"));
+                return;
+            }
 
-            ConsoleWriter.WriteLine(String.Format("Block hash: {0}; Block index: {1}; Block json: {2};", block.Hash, block.Index, block.ToJson(ProtocolSettings.Default).AsString()));
+            rabbitMQ = new RabbitMQ.RabbitMQ(Settings.Default.RMQ);
+
+            ConsoleWriter.WriteLine(String.Format("Load plugin NXABlockListener configuration; Network: {0};", Settings.Default.Network));
         }
 
         void IPersistencePlugin.OnCommit(NeoSystem system, Block block, DataCache snapshot)
         {
+            if (!Settings.Default.Active) return;
             if (system.Settings.Network != Settings.Default.Network) return;
 
-            ConsoleWriter.WriteLine(String.Format("Block hash: {0}; Block index: {1}; Block json: {2};", block.Hash, block.Index, block.ToJson(ProtocolSettings.Default).AsString()));
+            rabbitMQ.send(block.ToJson(ProtocolSettings.Default).AsString());
+            //ConsoleWriter.WriteLine(String.Format("Block hash: {0}; Block index: {1}; Block json: {2};", block.Hash, block.Index, block.ToJson(ProtocolSettings.Default).AsString()));
         }
+
 
         static string GetExceptionMessage(Exception exception)
         {
             return exception?.GetBaseException().Message;
         }
+
     }
 }

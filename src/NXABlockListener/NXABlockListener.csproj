@@ -1,13 +1,24 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RabbitMQ.Client" Version="6.2.2" />
+    <PackageReference Include="System.Collections" Version="4.3.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Update="NXABlockListener\config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Condition="$(ConfigurationName) == Debug" Command="echo &quot;Debug build: Copy output dll&quot;&#xD;&#xA;xcopy /Y /E  &quot;$(TargetDir)&quot; &quot;$(ProjectDir)..\..\..\neo-node\neo-cli\bin\Debug\net5.0\Plugins\&quot;&#xD;&#xA;" />
+  </Target>
+  
 
 </Project>

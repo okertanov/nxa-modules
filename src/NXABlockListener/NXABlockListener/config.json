@@ -1,6 +1,14 @@
 {
   "PluginConfiguration": {
-    "Test": "test read",
-    "Network": 860833102
+    "Active": true,
+    "Network": 199,
+    "RMQ": {
+      "Active": true,
+      "VirtualHost": "testVHost",
+      "RMQHost": ["localhost:5672","127.0.0.1:5672"],
+      "BlockQueue": "block-queue",
+      "Username": "guest",
+      "Password": "guest"
+    }
   }
 }

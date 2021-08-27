@@ -4,15 +4,16 @@ namespace Nxa.Plugins
 {
     internal class Settings
     {
-        public string Test { get; }
+        public bool Active { get; }
         public uint Network { get; }
-
+        public RabbitMQ.Settings RMQ { get; }
         public static Settings Default { get; private set; }
 
         public Settings(IConfigurationSection section)
         {
-            Test = section.GetValue("Test", "Nothing");
+            Active = section.GetValue("Active", false);
             Network = section.GetValue("Network", 5195086u);
+            RMQ = new RabbitMQ.Settings(section);
         }
 
         public static void Load(IConfigurationSection section)
