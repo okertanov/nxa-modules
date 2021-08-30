@@ -20,7 +20,8 @@ namespace Nxa.Plugins.RabbitMQ
             public string Host { get; }
             public int Port { get; }
         }
-        public bool Active { get; }
+        //public bool Active { get; }
+        public bool ConfirmSelect { get; }
         public string VirtualHost { get; }
         public HostAddress[] RMQHost { get; }
         public string BlockQueue { get; }
@@ -30,7 +31,8 @@ namespace Nxa.Plugins.RabbitMQ
         public Settings(IConfigurationSection section)
         {
             var rmqSection = section.GetSection("RMQ");
-            Active = rmqSection.GetValue("Active", false);
+            //Active = rmqSection.GetValue("Active", false);
+            ConfirmSelect = rmqSection.GetValue("ConfirmSelect", false);
             VirtualHost = rmqSection.GetValue("VirtualHost", "localhost");
             BlockQueue = rmqSection.GetValue("BlockQueue", "default");
             Username = rmqSection.GetValue("Username", "guest");

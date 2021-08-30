@@ -11,6 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\neo-modules\src\LevelDBStore\LevelDBStore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="NXABlockListener\config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

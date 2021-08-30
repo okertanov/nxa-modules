@@ -6,14 +6,18 @@ namespace Nxa.Plugins
     {
         public bool Active { get; }
         public uint Network { get; }
+        public uint StartBlock { get; }
         public RabbitMQ.Settings RMQ { get; }
+        public Db.Settings Db { get; }
         public static Settings Default { get; private set; }
 
         public Settings(IConfigurationSection section)
         {
             Active = section.GetValue("Active", false);
             Network = section.GetValue("Network", 5195086u);
+            StartBlock = section.GetValue("StartBlock", 0u);
             RMQ = new RabbitMQ.Settings(section);
+            Db = new Db.Settings(section);
         }
 
         public static void Load(IConfigurationSection section)

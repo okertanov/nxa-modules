@@ -8,38 +8,66 @@ namespace Nxa.Plugins.RabbitMQ
     public class RabbitMQ
     {
         private IConnection _connection;
-        private Settings _settings;
-        public RabbitMQ(Settings settings)
+        public RabbitMQ()
         {
-            _settings = settings;
-
-            if (!_settings.Active)
-            {
-                ConsoleWriter.WriteLine(string.Format("NXABlockListener RMQ disabled"));
-                return;
-            }
-
-            CreateConnection();
         }
 
-        public void send(string json)
+        public bool Send(string block)
         {
-
             if (ConnectionExists())
             {
                 using (var channel = _connection.CreateModel())
                 {
-                    channel.QueueDeclare(queue: _settings.BlockQueue, durable: false, exclusive: false, autoDelete: false, arguments: null);
+                    if (Plugins.Settings.Default.RMQ.ConfirmSelect)
+                    {
+                        channel.ConfirmSelect();
+                    }
+                    //channel.QueueDeclare(queue: Plugins.Settings.Default.RMQ.BlockQueue, durable: false, exclusive: false, autoDelete: false, arguments: null);
 
-                    var body = Encoding.UTF8.GetBytes(json);
+                    var body = Encoding.UTF8.GetBytes(block);
+                    channel.BasicPublish(exchange: "", routingKey: Nxa.Plugins.Settings.Default.RMQ.BlockQueue, basicProperties: null, body: body);
 
-                    channel.BasicPublish(exchange: "", routingKey: _settings.BlockQueue, basicProperties: null, body: body);
+                    if (Plugins.Settings.Default.RMQ.ConfirmSelect)
+                    {
+                        var result = channel.WaitForConfirms(new TimeSpan(0, 0, 5));
+                        return result;
+                    }
+                    return true;
                 }
             }
-
+            return false;
         }
 
+        public bool SendBatch(List<string> blockJsonList)
+        {
+            if (ConnectionExists())
+            {
+                using (var channel = _connection.CreateModel())
+                {
+                    if (Plugins.Settings.Default.RMQ.ConfirmSelect)
+                    {
+                        channel.ConfirmSelect();
+                    }
+                    //channel.QueueDeclare(queue: Plugins.Settings.Default.RMQ.BlockQueue, durable: false, exclusive: false, autoDelete: false, arguments: null);
 
+                    var basicPublishBatch = channel.CreateBasicPublishBatch();
+                    foreach (var block in blockJsonList)
+                    {
+                        var body = Encoding.UTF8.GetBytes(block);
+                        basicPublishBatch.Add(exchange: "", routingKey: Plugins.Settings.Default.RMQ.BlockQueue, mandatory: true, properties: null, new ReadOnlyMemory<byte>(body));
+                    }
+                    basicPublishBatch.Publish();
+
+                    if (Plugins.Settings.Default.RMQ.ConfirmSelect)
+                    {
+                        var result = channel.WaitForConfirms(new TimeSpan(0, 0, 5));
+                        return result;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
 
         private void CreateConnection()
         {
@@ -47,13 +75,13 @@ namespace Nxa.Plugins.RabbitMQ
             {
                 var factory = new ConnectionFactory
                 {
-                    UserName = _settings.Username,
-                    Password = _settings.Password,
-                    VirtualHost = _settings.VirtualHost
+                    UserName = Plugins.Settings.Default.RMQ.Username,
+                    Password = Plugins.Settings.Default.RMQ.Password,
+                    VirtualHost = Plugins.Settings.Default.RMQ.VirtualHost
                 };
 
                 var endpoints = new List<AmqpTcpEndpoint>();
-                foreach (var endpoint in _settings.RMQHost)
+                foreach (var endpoint in Plugins.Settings.Default.RMQ.RMQHost)
                 {
                     endpoints.Add(new AmqpTcpEndpoint(endpoint.Host, endpoint.Port));
                 }
@@ -61,15 +89,17 @@ namespace Nxa.Plugins.RabbitMQ
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Could not create RMQ connection: {ex.Message}");
-                //exit in this case???
+                ConsoleWriter.WriteLine($"Could not create RMQ connection: {ex.Message}");
             }
         }
 
         private bool ConnectionExists()
         {
-            if (_connection != null)
+            if (_connection != null && _connection.IsOpen)
                 return true;
+            else
+                _connection = null;
+
             CreateConnection();
             return _connection != null;
         }

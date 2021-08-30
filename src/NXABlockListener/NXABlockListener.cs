@@ -3,6 +3,7 @@ using Neo.Ledger;
 using Neo.Network.P2P.Payloads;
 using Neo.Persistence;
 using Neo.Plugins;
+using Nxa.Plugins.Db;
 using System;
 using System.Collections.Generic;
 
@@ -16,6 +17,8 @@ namespace Nxa.Plugins
         public override string Description => "NXABlockListener informs abount new blocks";
 
         private RabbitMQ.RabbitMQ rabbitMQ;
+        private LevelDbManager levelDbManager;
+        private BlockListenerManager blockListenerManager;
 
         protected override void Configure()
         {
@@ -26,10 +29,13 @@ namespace Nxa.Plugins
                 ConsoleWriter.WriteLine(string.Format("NXABlockListener inactive"));
                 return;
             }
+                        ConsoleWriter.WriteLine(String.Format("Load plugin NXABlockListener configuration; Network: {0};", Settings.Default.Network));
+        }
 
-            rabbitMQ = new RabbitMQ.RabbitMQ(Settings.Default.RMQ);
-
-            ConsoleWriter.WriteLine(String.Format("Load plugin NXABlockListener configuration; Network: {0};", Settings.Default.Network));
+        protected override void OnSystemLoaded(NeoSystem system)
+        {
+            if (system.Settings.Network != Settings.Default.Network) return;
+            blockListenerManager = new BlockListenerManager(system);
         }
 
         void IPersistencePlugin.OnCommit(NeoSystem system, Block block, DataCache snapshot)
@@ -37,14 +43,7 @@ namespace Nxa.Plugins
             if (!Settings.Default.Active) return;
             if (system.Settings.Network != Settings.Default.Network) return;
 
-            rabbitMQ.send(block.ToJson(ProtocolSettings.Default).AsString());
-            //ConsoleWriter.WriteLine(String.Format("Block hash: {0}; Block index: {1}; Block json: {2};", block.Hash, block.Index, block.ToJson(ProtocolSettings.Default).AsString()));
-        }
-
-
-        static string GetExceptionMessage(Exception exception)
-        {
-            return exception?.GetBaseException().Message;
+            blockListenerManager.AddBlock(block);
         }
 
     }
