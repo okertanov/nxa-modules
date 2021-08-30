@@ -1,11 +1,8 @@
 ﻿using Neo;
-using Neo.Ledger;
 using Neo.Network.P2P.Payloads;
 using Neo.Persistence;
 using Neo.Plugins;
-using Nxa.Plugins.Db;
 using System;
-using System.Collections.Generic;
 
 
 namespace Nxa.Plugins
@@ -16,8 +13,6 @@ namespace Nxa.Plugins
         public override string Name => "NXABlockListener";
         public override string Description => "NXABlockListener informs abount new blocks";
 
-        private RabbitMQ.RabbitMQ rabbitMQ;
-        private LevelDbManager levelDbManager;
         private BlockListenerManager blockListenerManager;
 
         protected override void Configure()
