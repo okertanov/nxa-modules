@@ -22,7 +22,7 @@ namespace Nxa.Plugins.RabbitMQ
                     {
                         channel.ConfirmSelect();
                     }
-                    //channel.QueueDeclare(queue: Plugins.Settings.Default.RMQ.BlockQueue, durable: false, exclusive: false, autoDelete: false, arguments: null);
+                    channel.QueueDeclare(queue: Plugins.Settings.Default.RMQ.BlockQueue, durable: false, exclusive: false, autoDelete: false, arguments: null);
 
                     var body = Encoding.UTF8.GetBytes(block);
                     channel.BasicPublish(exchange: "", routingKey: Nxa.Plugins.Settings.Default.RMQ.BlockQueue, basicProperties: null, body: body);
@@ -48,7 +48,7 @@ namespace Nxa.Plugins.RabbitMQ
                     {
                         channel.ConfirmSelect();
                     }
-                    //channel.QueueDeclare(queue: Plugins.Settings.Default.RMQ.BlockQueue, durable: false, exclusive: false, autoDelete: false, arguments: null);
+                    channel.QueueDeclare(queue: Plugins.Settings.Default.RMQ.BlockQueue, durable: false, exclusive: false, autoDelete: false, arguments: null);
 
                     var basicPublishBatch = channel.CreateBasicPublishBatch();
                     foreach (var block in blockJsonList)
