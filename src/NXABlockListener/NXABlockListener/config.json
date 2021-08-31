@@ -2,9 +2,8 @@
   "PluginConfiguration": {
     "Active": true,
     "Network": 199,
-    "StartBlock": 150000,
+    "StartBlock": 0,
     "RMQ": {
-      //"Active": true,
       "VirtualHost": "testVHost",
       "RMQHost": [ "localhost:5672", "127.0.0.1:5672" ],
       "BlockQueue": "block-queue",

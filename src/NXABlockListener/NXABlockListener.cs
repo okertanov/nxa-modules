@@ -24,11 +24,12 @@ namespace Nxa.Plugins
                 ConsoleWriter.WriteLine(string.Format("NXABlockListener inactive"));
                 return;
             }
-                        ConsoleWriter.WriteLine(String.Format("Load plugin NXABlockListener configuration; Network: {0};", Settings.Default.Network));
+            ConsoleWriter.WriteLine(String.Format("Load plugin NXABlockListener configuration; Network: {0};", Settings.Default.Network));
         }
 
         protected override void OnSystemLoaded(NeoSystem system)
         {
+            if (!Settings.Default.Active) return;
             if (system.Settings.Network != Settings.Default.Network) return;
             blockListenerManager = new BlockListenerManager(system);
         }
