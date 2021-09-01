@@ -1,12 +1,14 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Nxa.Plugins
 {
-    //Non thread blocking write to console 
     public static class ConsoleWriter
     {
         private static BlockingCollection<string> blockingCollection = new BlockingCollection<string>();
+        private static bool writeToScreen = false;
 
         static ConsoleWriter()
         {
@@ -14,7 +16,9 @@ namespace Nxa.Plugins
             {
                 while (true)
                 {
-                    System.Console.WriteLine(blockingCollection.Take());
+                    string message = blockingCollection.Take();
+                    if (writeToScreen)
+                        System.Console.WriteLine(message);
                 }
 
             });
@@ -23,6 +27,15 @@ namespace Nxa.Plugins
         public static void WriteLine(string value)
         {
             blockingCollection.Add(value);
+        }
+
+        public static void StartWriting()
+        {
+            writeToScreen = true;
+        }
+        public static void StopWriting()
+        {
+            writeToScreen = false;
         }
 
     }

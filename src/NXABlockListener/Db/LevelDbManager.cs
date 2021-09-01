@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Nxa.Plugins.Db
 {
-    public class LevelDbManager
+    public class LevelDbManager : IDisposable
     {
         private DB db;
 
@@ -24,15 +24,31 @@ namespace Nxa.Plugins.Db
             var value = db.Get(ReadOptions.Default, rmq_block_index_key);
             if (value == null)
                 return 0;
-            else 
+            else
                 return BitConverter.ToUInt32(value, 0);
         }
-        
+
         public void SetRMQBlockIndex(uint index)
         {
             var value = BitConverter.GetBytes(index);
             db.Put(WriteOptions.Default, rmq_block_index_key, value);
         }
 
+        #region dispose
+        public void Dispose()
+        {
+            dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void dispose(bool disposing)
+        {
+            if(disposing)
+            {
+                db.Dispose();
+            }
+        }
+
+        #endregion
     }
 }

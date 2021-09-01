@@ -5,16 +5,18 @@ using System.Text;
 
 namespace Nxa.Plugins.RabbitMQ
 {
-    public class RabbitMQ
+    public class RabbitMQ : IDisposable
     {
         private IConnection _connection;
+
+        private TimeSpan _confirmWaitTime = new TimeSpan(0, 0, 5);
         public RabbitMQ()
         {
         }
 
         public bool Send(string block)
         {
-            if (ConnectionExists())
+            if (connectionExists())
             {
                 using (var channel = _connection.CreateModel())
                 {
@@ -22,14 +24,14 @@ namespace Nxa.Plugins.RabbitMQ
                     {
                         channel.ConfirmSelect();
                     }
-                    channel.QueueDeclare(queue: Plugins.Settings.Default.RMQ.BlockQueue, durable: false, exclusive: false, autoDelete: false, arguments: null);
+                    channel.ExchangeDeclare(exchange: Plugins.Settings.Default.RMQ.Exchange, type: ExchangeType.Fanout, durable: false, autoDelete: false, arguments: null);
 
                     var body = Encoding.UTF8.GetBytes(block);
-                    channel.BasicPublish(exchange: "", routingKey: Nxa.Plugins.Settings.Default.RMQ.BlockQueue, basicProperties: null, body: body);
+                    channel.BasicPublish(exchange: Plugins.Settings.Default.RMQ.Exchange, routingKey: Plugins.Settings.Default.RMQ.Queue, basicProperties: null, body: body);
 
                     if (Plugins.Settings.Default.RMQ.ConfirmSelect)
                     {
-                        var result = channel.WaitForConfirms(new TimeSpan(0, 0, 5));
+                        var result = channel.WaitForConfirms(_confirmWaitTime);
                         return result;
                     }
                     return true;
@@ -40,7 +42,7 @@ namespace Nxa.Plugins.RabbitMQ
 
         public bool SendBatch(List<string> blockJsonList)
         {
-            if (ConnectionExists())
+            if (connectionExists())
             {
                 using (var channel = _connection.CreateModel())
                 {
@@ -48,19 +50,19 @@ namespace Nxa.Plugins.RabbitMQ
                     {
                         channel.ConfirmSelect();
                     }
-                    channel.QueueDeclare(queue: Plugins.Settings.Default.RMQ.BlockQueue, durable: false, exclusive: false, autoDelete: false, arguments: null);
+                    channel.ExchangeDeclare(exchange: Plugins.Settings.Default.RMQ.Exchange, type: ExchangeType.Fanout, durable: false, autoDelete: false, arguments: null);
 
                     var basicPublishBatch = channel.CreateBasicPublishBatch();
                     foreach (var block in blockJsonList)
                     {
                         var body = Encoding.UTF8.GetBytes(block);
-                        basicPublishBatch.Add(exchange: "", routingKey: Plugins.Settings.Default.RMQ.BlockQueue, mandatory: true, properties: null, new ReadOnlyMemory<byte>(body));
+                        basicPublishBatch.Add(exchange: Plugins.Settings.Default.RMQ.Exchange, routingKey: Plugins.Settings.Default.RMQ.Queue, mandatory: true, properties: null, new ReadOnlyMemory<byte>(body));
                     }
                     basicPublishBatch.Publish();
 
                     if (Plugins.Settings.Default.RMQ.ConfirmSelect)
                     {
-                        var result = channel.WaitForConfirms(new TimeSpan(0, 0, 5));
+                        var result = channel.WaitForConfirms(_confirmWaitTime);
                         return result;
                     }
                     return true;
@@ -69,7 +71,7 @@ namespace Nxa.Plugins.RabbitMQ
             return false;
         }
 
-        private void CreateConnection()
+        private void createConnection()
         {
             try
             {
@@ -93,16 +95,37 @@ namespace Nxa.Plugins.RabbitMQ
             }
         }
 
-        private bool ConnectionExists()
+        private bool connectionExists()
         {
             if (_connection != null && _connection.IsOpen)
                 return true;
             else
                 _connection = null;
 
-            CreateConnection();
+            createConnection();
             return _connection != null;
         }
+
+        #region dispose
+        public void Dispose()
+        {
+            dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_connection != null)
+                {
+                    _connection.Close();
+                    _connection.Dispose();
+                }
+            }
+        }
+
+        #endregion
     }
 
 }

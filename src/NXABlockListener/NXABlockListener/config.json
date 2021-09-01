@@ -4,9 +4,10 @@
     "Network": 199,
     "StartBlock": 0,
     "RMQ": {
-      "VirtualHost": "testVHost",
+      "VirtualHost": "/",
       "RMQHost": [ "localhost:5672", "127.0.0.1:5672" ],
-      "BlockQueue": "block-queue",
+      "Queue": "block-queue",
+      "Exchange": "block-listener",
       "Username": "guest",
       "Password": "guest",
       "ConfirmSelect": true
