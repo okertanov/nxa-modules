@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\neo-modules\src\LevelDBStore\LevelDBStore.csproj" />
+    <ProjectReference Include="..\..\..\neo-node\Neo.ConsoleService\Neo.ConsoleService.csproj" />
   </ItemGroup>
 
   <ItemGroup>
