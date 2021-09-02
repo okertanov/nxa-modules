@@ -5,6 +5,7 @@ namespace Nxa.Plugins
     internal class Settings
     {
         public bool Active { get; }
+        public bool AutoStart { get; }
         public uint Network { get; }
         public uint StartBlock { get; }
         public RabbitMQ.Settings RMQ { get; }
@@ -14,6 +15,7 @@ namespace Nxa.Plugins
         public Settings(IConfigurationSection section)
         {
             Active = section.GetValue("Active", false);
+            AutoStart = section.GetValue("AutoStart", false);
             Network = section.GetValue("Network", 5195086u);
             StartBlock = section.GetValue("StartBlock", 0u);
             RMQ = new RabbitMQ.Settings(section);

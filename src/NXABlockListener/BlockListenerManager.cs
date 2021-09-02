@@ -25,7 +25,10 @@ namespace Nxa.Plugins
         public BlockListenerManager(NeoSystem newSystem)
         {
             system = newSystem;
-            setUpBlockListener(system);
+            if (Plugins.Settings.Default.AutoStart)
+            {
+                setUpBlockListener(system);
+            }
         }
         public void AddBlock(Block block)
         {
