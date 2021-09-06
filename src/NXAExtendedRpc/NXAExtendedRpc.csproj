@@ -1,7 +1,25 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <Configurations>Debug;Release;LocalWindows_Debug</Configurations>
   </PropertyGroup>
 
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)|$(Platform)'=='LocalWindows_Debug|AnyCPU'">
+    <Message Text="NXAExtendedRpc: Copy output for windows debug" Importance="High" />
+
+    <CreateItem Include="$(OutDir)**\*.*">
+      <Output TaskParameter="Include" ItemName="PluginToCopy" />
+    </CreateItem>
+    <Copy SourceFiles="@(PluginToCopy)" DestinationFolder="..\..\..\neo-node\neo-cli\bin\LocalWindows_Debug\net5.0\Plugins\%(RecursiveDir)" SkipUnchangedFiles="false" />
+  </Target>
+
+
+  <ItemGroup>
+    <None Update="NXAExtendedRpc\config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  
 </Project>

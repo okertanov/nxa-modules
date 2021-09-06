@@ -203,8 +203,10 @@ namespace Nxa.Plugins
         {
             if (token.IsCancellationRequested)
             {
-                levelDbManager.Dispose();
-                rabbitMQ.Dispose();
+                if (levelDbManager != null)
+                    levelDbManager.Dispose();
+                if (rabbitMQ != null)
+                    rabbitMQ.Dispose();
                 token.ThrowIfCancellationRequested();
             }
         }

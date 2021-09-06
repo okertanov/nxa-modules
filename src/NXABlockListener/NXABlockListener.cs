@@ -110,7 +110,8 @@ namespace Nxa.Plugins
         public override void Dispose()
         {
             _shutdownToken.Cancel();
-            blockListenerManager.Dispose();
+            if (blockListenerManager != null)
+                blockListenerManager.Dispose();
         }
         #endregion
     }
