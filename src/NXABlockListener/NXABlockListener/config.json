@@ -1,7 +1,7 @@
 {
   "PluginConfiguration": {
     "Active": true,
-    "AutoStart": true,
+    "AutoStart": false,
     "Network": 199,
     "StartBlock": 0,
     "RMQ": {

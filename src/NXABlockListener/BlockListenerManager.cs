@@ -17,7 +17,7 @@ namespace Nxa.Plugins
         private bool _active = false;
 
         private const int loadAmount = 1000;
-        private static readonly BlockingCollection<Block> incomingBlocks = new();
+        private static BlockingCollection<Block> incomingBlocks = new();
         private ConcurrentBag<Task> tasks;
         private CancellationTokenSource tokenSource;
 
@@ -34,6 +34,7 @@ namespace Nxa.Plugins
         {
             incomingBlocks.Add(block);
         }
+
         public void StartBlockListener()
         {
             if (_active)
@@ -54,6 +55,8 @@ namespace Nxa.Plugins
 
             RabbitMQ.RabbitMQ rabbitMQ = new();
             LevelDbManager levelDbManager = new();
+
+            incomingBlocks = new();
 
             tasks.Add(Task.Run(() => unsentBlockProcessing(system, levelDbManager, rabbitMQ, tokenSource.Token), tokenSource.Token));
             _active = true;
@@ -207,6 +210,8 @@ namespace Nxa.Plugins
                     levelDbManager.Dispose();
                 if (rabbitMQ != null)
                     rabbitMQ.Dispose();
+                if (incomingBlocks != null)
+                    incomingBlocks.Dispose();
                 token.ThrowIfCancellationRequested();
             }
         }

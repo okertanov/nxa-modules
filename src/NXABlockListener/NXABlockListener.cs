@@ -33,8 +33,6 @@ namespace Nxa.Plugins
             {
                 Settings.Load();
                 Console.WriteLine(String.Format("NXABlockListener configuration cannot be loaded. Error: {0}", e.Message));
-
-                //ConsoleWriter.WriteLine(String.Format("NXABlockListener configuration cannot be loaded. Error: {0}", e.Message));
             }
         }
 
@@ -46,12 +44,11 @@ namespace Nxa.Plugins
             try
             {
                 blockListenerManager = new BlockListenerManager(system);
-                throw new Exception("test this exception");
+                Console.WriteLine(String.Format("NXABlockListener loaded"));
             }
             catch (Exception e)
             {
-                Console.WriteLine(String.Format("NXABlockListener cannot start. Error: {0}", e.Message));
-                //ConsoleWriter.WriteLine(String.Format("NXABlockListener cannot start. Error: {0}", e.Message));
+                Console.WriteLine(String.Format("NXABlockListener cannot load. Error: {0}", e.Message));
 
                 if (blockListenerManager != null)
                     blockListenerManager.Dispose();
@@ -63,7 +60,8 @@ namespace Nxa.Plugins
             if (!Settings.Default.Active) return;
             if (system.Settings.Network != Settings.Default.Network) return;
 
-            BlockListenerManager.AddBlock(block);
+            if (blockListenerManager != null && blockListenerManager.Active)
+                BlockListenerManager.AddBlock(block);
         }
 
         [ConsoleCommand("stop blocklistener", Category = "BlockListener", Description = "Stop block listener service (NXABlockListener)")]
@@ -112,7 +110,7 @@ namespace Nxa.Plugins
             }
             else
             {
-                ConsoleWriter.WriteLine(String.Format("Plugin NXABlockListener Active: {0}", blockListenerManager.Active));
+                ConsoleWriter.WriteLine(String.Format("Plugin NXABlockListener Active: {0}", blockListenerManager != null ? blockListenerManager.Active : false));
                 ReadLine();
             }
             ConsoleWriter.StopWriting();
