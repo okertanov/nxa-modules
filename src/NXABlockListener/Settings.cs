@@ -22,9 +22,16 @@ namespace Nxa.Plugins
             Db = new Db.Settings(section);
         }
 
-        public static void Load(IConfigurationSection section)
+
+        public static void Load(IConfigurationSection section = null)
         {
+            if (section == null)
+            {
+                section = new ConfigurationBuilder().Build().GetSection("");
+            }
             Default = new Settings(section);
+            
         }
+
     }
 }

@@ -17,7 +17,7 @@ namespace Nxa.Plugins
         private bool _active = false;
 
         private const int loadAmount = 1000;
-        private static BlockingCollection<Block> incomingBlocks = new BlockingCollection<Block>();
+        private static readonly BlockingCollection<Block> incomingBlocks = new();
         private ConcurrentBag<Task> tasks;
         private CancellationTokenSource tokenSource;
 
@@ -30,7 +30,7 @@ namespace Nxa.Plugins
                 setUpBlockListener(system);
             }
         }
-        public void AddBlock(Block block)
+        public static void AddBlock(Block block)
         {
             incomingBlocks.Add(block);
         }
@@ -52,8 +52,8 @@ namespace Nxa.Plugins
             tokenSource = new CancellationTokenSource();
             tasks = new ConcurrentBag<Task>();
 
-            RabbitMQ.RabbitMQ rabbitMQ = new RabbitMQ.RabbitMQ();
-            LevelDbManager levelDbManager = new LevelDbManager();
+            RabbitMQ.RabbitMQ rabbitMQ = new();
+            LevelDbManager levelDbManager = new();
 
             tasks.Add(Task.Run(() => unsentBlockProcessing(system, levelDbManager, rabbitMQ, tokenSource.Token), tokenSource.Token));
             _active = true;
@@ -77,10 +77,10 @@ namespace Nxa.Plugins
                     ConsoleWriter.WriteLine(String.Format("RMQ block index {0} and current block index {1}", rmqBlockIndex, currentBlockIndex));
 
                     int i = 0;
-                    List<Block> unsentBlocks = new List<Block>();
+                    List<Block> unsentBlocks = new();
                     while (activeBlockIndex < currentBlockIndex)
                     {
-                        checkCancellationToken(token, levelDbManager, rabbitMQ);
+                        checkCancellationToken(levelDbManager, rabbitMQ, token);
 
                         var block = NativeContract.Ledger.GetBlock(snapshot, activeBlockIndex);
                         unsentBlocks.Add(block);
@@ -113,20 +113,20 @@ namespace Nxa.Plugins
         {
             while (true)
             {
-                checkCancellationToken(token, levelDbManager, rabbitMQ);
+                checkCancellationToken(levelDbManager, rabbitMQ, token);
 
-                var block = incomingBlocks.Take();
+                var block = incomingBlocks.Take(CancellationToken.None);
 
                 bool blocksSent = false;
                 while (!blocksSent)
                 {
-                    checkCancellationToken(token, levelDbManager, rabbitMQ);
+                    checkCancellationToken(levelDbManager, rabbitMQ, token);
 
                     uint rmqBlockIndex = block.Index;
                     blocksSent = rabbitMQ.Send(block.ToJson(ProtocolSettings.Default).AsString());
                     if (!blocksSent)
                     {
-                        checkCancellationToken(token, levelDbManager, rabbitMQ);
+                        checkCancellationToken(levelDbManager, rabbitMQ, token);
                         ConsoleWriter.WriteLine(String.Format("Failed to send blocks to RMQ. Wait 5sec and try again."));
                         Thread.Sleep(new TimeSpan(0, 0, 5));
                     }
@@ -143,7 +143,7 @@ namespace Nxa.Plugins
         {
             ConsoleWriter.WriteLine(String.Format("Try sending {0} blocks to RMQ", unsentBlocks.Count));
 
-            List<string> blocks = new List<string>();
+            List<string> blocks = new();
             foreach (var block in unsentBlocks)
             {
                 rmqBlockIndex = block.Index;
@@ -153,12 +153,12 @@ namespace Nxa.Plugins
             bool blocksSent = false;
             while (!blocksSent)
             {
-                checkCancellationToken(token, levelDbManager, rabbitMQ);
+                checkCancellationToken(levelDbManager, rabbitMQ, token);
 
                 blocksSent = rabbitMQ.SendBatch(blocks);
                 if (!blocksSent)
                 {
-                    checkCancellationToken(token, levelDbManager, rabbitMQ);
+                    checkCancellationToken(levelDbManager, rabbitMQ, token);
 
                     ConsoleWriter.WriteLine(String.Format("Failed to send blocks to RMQ. Wait 5sec and try again."));
                     Thread.Sleep(new TimeSpan(0, 0, 5));
@@ -199,7 +199,7 @@ namespace Nxa.Plugins
                 _active = false;
             }
         }
-        private void checkCancellationToken(CancellationToken token, LevelDbManager levelDbManager, RabbitMQ.RabbitMQ rabbitMQ)
+        private void checkCancellationToken(LevelDbManager levelDbManager, RabbitMQ.RabbitMQ rabbitMQ, CancellationToken token)
         {
             if (token.IsCancellationRequested)
             {

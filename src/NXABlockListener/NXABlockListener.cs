@@ -19,14 +19,23 @@ namespace Nxa.Plugins
 
         protected override void Configure()
         {
-            Settings.Load(GetConfiguration());
-
-            if (!Settings.Default.Active)
+            try
             {
-                Console.WriteLine(string.Format("NXABlockListener turned off. Check config file."));
-                return;
+                Settings.Load(GetConfiguration());
+                if (!Settings.Default.Active)
+                {
+                    Console.WriteLine(string.Format("NXABlockListener turned off. Check config file."));
+                    return;
+                }
+                Console.WriteLine(String.Format("Load plugin NXABlockListener configuration; Network: {0};", Settings.Default.Network));
             }
-            Console.WriteLine(String.Format("Load plugin NXABlockListener configuration; Network: {0};", Settings.Default.Network));
+            catch (Exception e)
+            {
+                Settings.Load();
+                Console.WriteLine(String.Format("NXABlockListener configuration cannot be loaded. Error: {0}", e.Message));
+
+                //ConsoleWriter.WriteLine(String.Format("NXABlockListener configuration cannot be loaded. Error: {0}", e.Message));
+            }
         }
 
         protected override void OnSystemLoaded(NeoSystem system)
@@ -34,7 +43,19 @@ namespace Nxa.Plugins
             if (!Settings.Default.Active) return;
             if (system.Settings.Network != Settings.Default.Network) return;
 
-            blockListenerManager = new BlockListenerManager(system);
+            try
+            {
+                blockListenerManager = new BlockListenerManager(system);
+                throw new Exception("test this exception");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(String.Format("NXABlockListener cannot start. Error: {0}", e.Message));
+                //ConsoleWriter.WriteLine(String.Format("NXABlockListener cannot start. Error: {0}", e.Message));
+
+                if (blockListenerManager != null)
+                    blockListenerManager.Dispose();
+            }
         }
 
         void IPersistencePlugin.OnCommit(NeoSystem system, Block block, DataCache snapshot)
@@ -42,14 +63,17 @@ namespace Nxa.Plugins
             if (!Settings.Default.Active) return;
             if (system.Settings.Network != Settings.Default.Network) return;
 
-            blockListenerManager.AddBlock(block);
+            BlockListenerManager.AddBlock(block);
         }
 
         [ConsoleCommand("stop blocklistener", Category = "BlockListener", Description = "Stop block listener service (NXABlockListener)")]
         public void StopBlockListener()
         {
-            Console.WriteLine("Stopping block listener");
-            blockListenerManager.StopBlockListener();
+            if (blockListenerManager != null)
+            {
+                Console.WriteLine("Stopping block listener");
+                blockListenerManager.StopBlockListener();
+            }
             Console.WriteLine("Block listener stopped");
         }
 
@@ -62,9 +86,17 @@ namespace Nxa.Plugins
                 return;
             }
 
-            Console.WriteLine("Starting block listener");
-            blockListenerManager.StartBlockListener();
-            Console.WriteLine("Block listener started");
+            if (blockListenerManager != null)
+            {
+                Console.WriteLine("Starting block listener");
+                blockListenerManager.StartBlockListener();
+                Console.WriteLine("Block listener started");
+            }
+            else
+            {
+                Console.WriteLine(String.Format("NXABlockListener cannot start."));
+                //ConsoleWriter.WriteLine(String.Format("NXABlockListener cannot start. Error: {0}", e.Message));
+            }
         }
 
 
@@ -89,7 +121,7 @@ namespace Nxa.Plugins
         }
 
 
-        private readonly CancellationTokenSource _shutdownToken = new CancellationTokenSource();
+        private readonly CancellationTokenSource _shutdownToken = new();
         protected string ReadLine()
         {
             Task<string> readLineTask = Task.Run(() => Console.ReadLine());
@@ -112,6 +144,7 @@ namespace Nxa.Plugins
             _shutdownToken.Cancel();
             if (blockListenerManager != null)
                 blockListenerManager.Dispose();
+            //GC.SuppressFinalize(this);
         }
         #endregion
     }
