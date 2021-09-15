@@ -30,7 +30,7 @@ namespace Nxa.Plugins
             system = newSystem;
             if (Plugins.Settings.Default.AutoStart)
             {
-                setUpBlockListener(system);
+                SetUpBlockListener();
             }
         }
         public static void AddBlock(Block block)
@@ -42,16 +42,16 @@ namespace Nxa.Plugins
         {
             if (_active)
                 return;
-            setUpBlockListener(system);
+            SetUpBlockListener();
         }
         public void StopBlockListener()
         {
             if (!_active)
                 return;
-            stop();
+            Stop();
         }
 
-        private void setUpBlockListener(NeoSystem system)
+        private void SetUpBlockListener()
         {
             tokenSource = new CancellationTokenSource();
             tasks = new ConcurrentBag<Task>();
@@ -66,12 +66,12 @@ namespace Nxa.Plugins
 
             incomingBlocks = new();
 
-            tasks.Add(Task.Run(() => unsentBlockProcessing(system, levelDbManager, rabbitMQ, tokenSource.Token), tokenSource.Token));
+            tasks.Add(Task.Run(() => UnsentBlockProcessing(tokenSource.Token), tokenSource.Token));
             _active = true;
         }
 
 
-        private void unsentBlockProcessing(NeoSystem system, LevelDbManager levelDbManager, RabbitMQ.RabbitMQ rabbitMQ, CancellationToken token)
+        private void UnsentBlockProcessing(CancellationToken token)
         {
             uint rmqBlockIndex = levelDbManager.GetRMQBlockIndex();
             if (Settings.Default.StartBlock > rmqBlockIndex)
@@ -91,7 +91,7 @@ namespace Nxa.Plugins
                     List<Block> unsentBlocks = new();
                     while (activeBlockIndex < currentBlockIndex)
                     {
-                        checkCancellationToken(levelDbManager, rabbitMQ, token);
+                        CheckCancellationToken(token);
 
                         var block = NativeContract.Ledger.GetBlock(snapshot, activeBlockIndex);
                         unsentBlocks.Add(block);
@@ -99,7 +99,7 @@ namespace Nxa.Plugins
                         i++;
                         if (i == loadAmount)
                         {
-                            rmqBlockIndex = trySendRMQ(levelDbManager, rabbitMQ, rmqBlockIndex, unsentBlocks, token);
+                            rmqBlockIndex = TrySendRMQ(rmqBlockIndex, unsentBlocks, token);
                             ConsoleWriter.WriteLine(String.Format("RMQ block index {0} and current block index {1}", rmqBlockIndex, currentBlockIndex));
 
                             i = 0;
@@ -109,7 +109,7 @@ namespace Nxa.Plugins
                     }
                     if (unsentBlocks.Count > 0)
                     {
-                        rmqBlockIndex = trySendRMQ(levelDbManager, rabbitMQ, rmqBlockIndex, unsentBlocks, token);
+                        rmqBlockIndex = TrySendRMQ( rmqBlockIndex, unsentBlocks, token);
                         ConsoleWriter.WriteLine(String.Format("RMQ block index {0} and current block index {1}", rmqBlockIndex, currentBlockIndex));
                         unsentBlocks.Clear();
                     }
@@ -117,27 +117,27 @@ namespace Nxa.Plugins
             }
 
             //start block listener
-            tasks.Add(Task.Run(() => blockListner(levelDbManager, rabbitMQ, token), token));
+            tasks.Add(Task.Run(() => BlockListner(levelDbManager, rabbitMQ, token), token));
         }
 
-        private void blockListner(LevelDbManager levelDbManager, RabbitMQ.RabbitMQ rabbitMQ, CancellationToken token)
+        private void BlockListner(LevelDbManager levelDbManager, RabbitMQ.RabbitMQ rabbitMQ, CancellationToken token)
         {
             while (true)
             {
-                checkCancellationToken(levelDbManager, rabbitMQ, token);
+                CheckCancellationToken(token);
 
                 var block = incomingBlocks.Take(CancellationToken.None);
 
                 bool blocksSent = false;
                 while (!blocksSent)
                 {
-                    checkCancellationToken(levelDbManager, rabbitMQ, token);
+                    CheckCancellationToken(token);
 
                     uint rmqBlockIndex = block.Index;
                     blocksSent = rabbitMQ.Send(block.ToJson(ProtocolSettings.Default).AsString());
                     if (!blocksSent)
                     {
-                        checkCancellationToken(levelDbManager, rabbitMQ, token);
+                        CheckCancellationToken(token);
                         ConsoleWriter.WriteLine(String.Format("Failed to send blocks to RMQ. Wait 5sec and try again."));
                         Thread.Sleep(new TimeSpan(0, 0, 5));
                     }
@@ -150,7 +150,7 @@ namespace Nxa.Plugins
             }
         }
 
-        private uint trySendRMQ(LevelDbManager levelDbManager, RabbitMQ.RabbitMQ rabbitMQ, uint rmqBlockIndex, List<Block> unsentBlocks, CancellationToken token)
+        private uint TrySendRMQ(uint rmqBlockIndex, List<Block> unsentBlocks, CancellationToken token)
         {
             ConsoleWriter.WriteLine(String.Format("Try sending {0} blocks to RMQ", unsentBlocks.Count));
 
@@ -164,12 +164,12 @@ namespace Nxa.Plugins
             bool blocksSent = false;
             while (!blocksSent)
             {
-                checkCancellationToken(levelDbManager, rabbitMQ, token);
+                CheckCancellationToken( token);
 
                 blocksSent = rabbitMQ.SendBatch(blocks);
                 if (!blocksSent)
                 {
-                    checkCancellationToken(levelDbManager, rabbitMQ, token);
+                    CheckCancellationToken(token);
 
                     ConsoleWriter.WriteLine(String.Format("Failed to send blocks to RMQ. Wait 5sec and try again."));
                     Thread.Sleep(new TimeSpan(0, 0, 5));
@@ -187,10 +187,10 @@ namespace Nxa.Plugins
         #region dispose
         public void Dispose()
         {
-            stop();
+            Stop();
             GC.SuppressFinalize(this);
         }
-        private void stop()
+        private void Stop()
         {
             if (_active)
             {
@@ -210,7 +210,7 @@ namespace Nxa.Plugins
                 _active = false;
             }
         }
-        private void checkCancellationToken(LevelDbManager levelDbManager, RabbitMQ.RabbitMQ rabbitMQ, CancellationToken token)
+        private void CheckCancellationToken(CancellationToken token)
         {
             if (token.IsCancellationRequested)
             {

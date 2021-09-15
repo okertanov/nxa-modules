@@ -10,7 +10,7 @@ namespace Nxa.Plugins.Db
         private DB db;
 
         private const string rmq_block_index = "rmq_block_index";
-        private byte[] rmq_block_index_key;
+        private readonly byte[] rmq_block_index_key;
 
         public LevelDbManager()
         {
@@ -37,16 +37,19 @@ namespace Nxa.Plugins.Db
         #region dispose
         public void Dispose()
         {
-            dispose(true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        private void dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if(disposing)
             {
-                db.Dispose();
-                db = null;
+                if (db != null)
+                {
+                    db.Dispose();
+                    db = null;
+                }
             }
         }
 

@@ -7,7 +7,7 @@ namespace Nxa.Plugins
 {
     public static class ConsoleWriter
     {
-        private static BlockingCollection<string> blockingCollection = new BlockingCollection<string>();
+        private static readonly BlockingCollection<string> blockingCollection = new();
         private static bool writeToScreen = false;
 
         static ConsoleWriter()

@@ -142,7 +142,7 @@ namespace Nxa.Plugins
             _shutdownToken.Cancel();
             if (blockListenerManager != null)
                 blockListenerManager.Dispose();
-            //GC.SuppressFinalize(this);
+            GC.SuppressFinalize(this);
         }
         #endregion
     }

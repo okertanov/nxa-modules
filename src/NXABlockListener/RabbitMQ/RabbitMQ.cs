@@ -9,14 +9,14 @@ namespace Nxa.Plugins.RabbitMQ
     {
         private IConnection _connection;
 
-        private TimeSpan _confirmWaitTime = new TimeSpan(0, 0, 5);
+        private readonly TimeSpan _confirmWaitTime = new (0, 0, 5);
         public RabbitMQ()
         {
         }
 
         public bool Send(string block)
         {
-            if (connectionExists())
+            if (ConnectionExists())
             {
                 using (var channel = _connection.CreateModel())
                 {
@@ -42,7 +42,7 @@ namespace Nxa.Plugins.RabbitMQ
 
         public bool SendBatch(List<string> blockJsonList)
         {
-            if (connectionExists())
+            if (ConnectionExists())
             {
                 using (var channel = _connection.CreateModel())
                 {
@@ -71,7 +71,7 @@ namespace Nxa.Plugins.RabbitMQ
             return false;
         }
 
-        private void createConnection()
+        private void CreateConnection()
         {
             try
             {
@@ -95,31 +95,32 @@ namespace Nxa.Plugins.RabbitMQ
             }
         }
 
-        private bool connectionExists()
+        private bool ConnectionExists()
         {
             if (_connection != null && _connection.IsOpen)
                 return true;
             else
                 _connection = null;
 
-            createConnection();
+            CreateConnection();
             return _connection != null;
         }
 
         #region dispose
         public void Dispose()
         {
-            dispose(true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        private void dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (disposing)
             {
                 if (_connection != null)
                 {
-                    _connection.Close();
+                    if (_connection.IsOpen)
+                        _connection.Close();
                     _connection.Dispose();
                 }
             }
