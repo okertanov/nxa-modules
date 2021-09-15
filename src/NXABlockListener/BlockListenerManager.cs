@@ -22,6 +22,9 @@ namespace Nxa.Plugins
         private CancellationTokenSource tokenSource;
 
         private readonly NeoSystem system;
+        private RabbitMQ.RabbitMQ rabbitMQ;
+        private LevelDbManager levelDbManager;
+
         public BlockListenerManager(NeoSystem newSystem)
         {
             system = newSystem;
@@ -53,8 +56,13 @@ namespace Nxa.Plugins
             tokenSource = new CancellationTokenSource();
             tasks = new ConcurrentBag<Task>();
 
-            RabbitMQ.RabbitMQ rabbitMQ = new();
-            LevelDbManager levelDbManager = new();
+            if (rabbitMQ != null)
+                rabbitMQ.Dispose();
+            if (levelDbManager != null)
+                levelDbManager.Dispose();
+
+            rabbitMQ = new();
+            levelDbManager = new();
 
             incomingBlocks = new();
 

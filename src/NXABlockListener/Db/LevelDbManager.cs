@@ -46,6 +46,7 @@ namespace Nxa.Plugins.Db
             if(disposing)
             {
                 db.Dispose();
+                db = null;
             }
         }
 
