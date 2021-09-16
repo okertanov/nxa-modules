@@ -33,6 +33,7 @@ namespace Nxa.Plugins
                 SetUpBlockListener();
             }
         }
+
         public static void AddBlock(Block block)
         {
             incomingBlocks.Add(block);
@@ -44,6 +45,7 @@ namespace Nxa.Plugins
                 return;
             SetUpBlockListener();
         }
+
         public void StopBlockListener()
         {
             if (!_active)
@@ -67,13 +69,14 @@ namespace Nxa.Plugins
             incomingBlocks = new();
 
             tasks.Add(Task.Run(() => UnsentBlockProcessing(tokenSource.Token), tokenSource.Token));
-            _active = true;
+            SetBlockListenerState(true);
         }
-
 
         private void UnsentBlockProcessing(CancellationToken token)
         {
             uint rmqBlockIndex = levelDbManager.GetRMQBlockIndex();
+            ConsoleWriter.UpdateRmqBlock(rmqBlockIndex);
+
             if (Settings.Default.StartBlock > rmqBlockIndex)
                 rmqBlockIndex = Settings.Default.StartBlock;
 
@@ -84,8 +87,8 @@ namespace Nxa.Plugins
                 var currentBlockIndex = NativeContract.Ledger.CurrentIndex(snapshot);
                 if (rmqBlockIndex < currentBlockIndex)
                 {
-                    ConsoleWriter.WriteLine(String.Format("Load and send unsent blocs to RMQ. Load by {0} and send", loadAmount));
-                    ConsoleWriter.WriteLine(String.Format("RMQ block index {0} and current block index {1}", rmqBlockIndex, currentBlockIndex));
+                    ConsoleWriter.WriteLine($"Load and send unsent blocs to RMQ. Load by {loadAmount} and send");
+                    ConsoleWriter.WriteLine($"RMQ block index {rmqBlockIndex} and current block index {currentBlockIndex}");
 
                     int i = 0;
                     List<Block> unsentBlocks = new();
@@ -100,7 +103,7 @@ namespace Nxa.Plugins
                         if (i == loadAmount)
                         {
                             rmqBlockIndex = TrySendRMQ(rmqBlockIndex, unsentBlocks, token);
-                            ConsoleWriter.WriteLine(String.Format("RMQ block index {0} and current block index {1}", rmqBlockIndex, currentBlockIndex));
+                            ConsoleWriter.WriteLine($"RMQ block index {rmqBlockIndex} and current block index {currentBlockIndex}");
 
                             i = 0;
                             unsentBlocks.Clear();
@@ -109,24 +112,27 @@ namespace Nxa.Plugins
                     }
                     if (unsentBlocks.Count > 0)
                     {
-                        rmqBlockIndex = TrySendRMQ( rmqBlockIndex, unsentBlocks, token);
-                        ConsoleWriter.WriteLine(String.Format("RMQ block index {0} and current block index {1}", rmqBlockIndex, currentBlockIndex));
+                        rmqBlockIndex = TrySendRMQ(rmqBlockIndex, unsentBlocks, token);
+                        ConsoleWriter.WriteLine($"RMQ block index {rmqBlockIndex} and current block index {currentBlockIndex}");
                         unsentBlocks.Clear();
                     }
                 }
             }
 
             //start block listener
-            tasks.Add(Task.Run(() => BlockListner(levelDbManager, rabbitMQ, token), token));
+            tasks.Add(Task.Run(() => BlockListner(token), token));
         }
 
-        private void BlockListner(LevelDbManager levelDbManager, RabbitMQ.RabbitMQ rabbitMQ, CancellationToken token)
+        private void BlockListner(CancellationToken token)
         {
             while (true)
             {
-                CheckCancellationToken(token);
+                //CheckCancellationToken(token);
+                //var block = incomingBlocks.Take(CancellationToken.None);
 
-                var block = incomingBlocks.Take(CancellationToken.None);
+                Block block = null;
+                try { block = incomingBlocks.Take(token); }
+                catch { CheckCancellationToken(token); }
 
                 bool blocksSent = false;
                 while (!blocksSent)
@@ -138,13 +144,14 @@ namespace Nxa.Plugins
                     if (!blocksSent)
                     {
                         CheckCancellationToken(token);
-                        ConsoleWriter.WriteLine(String.Format("Failed to send blocks to RMQ. Wait 5sec and try again."));
+                        ConsoleWriter.WriteLine("Failed to send blocks to RMQ. Wait 5sec and try again.");
                         Thread.Sleep(new TimeSpan(0, 0, 5));
                     }
                     else
                     {
-                        ConsoleWriter.WriteLine(String.Format("Successfully sent blocks to RMQ. Updating RMQ block index to {0}", rmqBlockIndex));
+                        ConsoleWriter.WriteLine($"Successfully sent blocks to RMQ. Updating RMQ block index to {rmqBlockIndex}");
                         levelDbManager.SetRMQBlockIndex(rmqBlockIndex);
+                        ConsoleWriter.UpdateRmqBlock(rmqBlockIndex);
                     }
                 }
             }
@@ -152,7 +159,7 @@ namespace Nxa.Plugins
 
         private uint TrySendRMQ(uint rmqBlockIndex, List<Block> unsentBlocks, CancellationToken token)
         {
-            ConsoleWriter.WriteLine(String.Format("Try sending {0} blocks to RMQ", unsentBlocks.Count));
+            ConsoleWriter.WriteLine($"Try sending {unsentBlocks.Count} blocks to RMQ");
 
             List<string> blocks = new();
             foreach (var block in unsentBlocks)
@@ -164,24 +171,31 @@ namespace Nxa.Plugins
             bool blocksSent = false;
             while (!blocksSent)
             {
-                CheckCancellationToken( token);
+                CheckCancellationToken(token);
 
                 blocksSent = rabbitMQ.SendBatch(blocks);
                 if (!blocksSent)
                 {
                     CheckCancellationToken(token);
 
-                    ConsoleWriter.WriteLine(String.Format("Failed to send blocks to RMQ. Wait 5sec and try again."));
+                    ConsoleWriter.WriteLine("Failed to send blocks to RMQ. Wait 5sec and try again.");
                     Thread.Sleep(new TimeSpan(0, 0, 5));
                 }
                 else
                 {
-                    ConsoleWriter.WriteLine(String.Format("Successfully sent blocks to RMQ. Updating RMQ block index to {0}", rmqBlockIndex));
+                    ConsoleWriter.WriteLine($"Successfully sent blocks to RMQ. Updating RMQ block index to {rmqBlockIndex}");
                     levelDbManager.SetRMQBlockIndex(rmqBlockIndex);
+                    ConsoleWriter.UpdateRmqBlock(rmqBlockIndex);
                 }
             }
 
             return rmqBlockIndex;
+        }
+
+        private void SetBlockListenerState(bool active)
+        {
+            _active = active;
+            ConsoleWriter.UpdateBlockListenerState(active);
         }
 
         #region dispose
@@ -207,7 +221,7 @@ namespace Nxa.Plugins
                 {
                     tokenSource.Dispose();
                 }
-                _active = false;
+                SetBlockListenerState(false);
             }
         }
         private void CheckCancellationToken(CancellationToken token)
