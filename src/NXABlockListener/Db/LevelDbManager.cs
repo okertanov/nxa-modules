@@ -37,20 +37,9 @@ namespace Nxa.Plugins.Db
         #region dispose
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        private void Dispose(bool disposing)
-        {
-            if(disposing)
-            {
-                if (db != null)
-                {
-                    db.Dispose();
-                    db = null;
-                }
-            }
+            db?.Dispose();
+            db = null;
+            //GC.SuppressFinalize(this);
         }
 
         #endregion

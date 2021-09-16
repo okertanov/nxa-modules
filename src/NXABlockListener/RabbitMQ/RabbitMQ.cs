@@ -9,16 +9,16 @@ namespace Nxa.Plugins.RabbitMQ
     {
         private IConnection _connection;
 
-        private readonly TimeSpan _confirmWaitTime = new(0, 0, 5);
+        private readonly TimeSpan _confirmWaitTimeSec = new(0, 0, 5);
         public RabbitMQ()
         {
         }
 
-        public bool Send(string block)
+        public bool Send(string msg)
         {
             try
             {
-                if (ConnectionExists())
+                if (SetUpConnection())
                 {
                     using (var channel = _connection.CreateModel())
                     {
@@ -28,12 +28,12 @@ namespace Nxa.Plugins.RabbitMQ
                         }
                         channel.ExchangeDeclare(exchange: Plugins.Settings.Default.RMQ.Exchange, type: ExchangeType.Fanout, durable: false, autoDelete: false, arguments: null);
 
-                        var body = Encoding.UTF8.GetBytes(block);
+                        var body = Encoding.UTF8.GetBytes(msg);
                         channel.BasicPublish(exchange: Plugins.Settings.Default.RMQ.Exchange, routingKey: Plugins.Settings.Default.RMQ.Queue, basicProperties: null, body: body);
 
                         if (Plugins.Settings.Default.RMQ.ConfirmSelect)
                         {
-                            var result = channel.WaitForConfirms(_confirmWaitTime);
+                            var result = channel.WaitForConfirms(_confirmWaitTimeSec);
                             return result;
                         }
                         return true;
@@ -50,11 +50,11 @@ namespace Nxa.Plugins.RabbitMQ
             }
         }
 
-        public bool SendBatch(List<string> blockJsonList)
+        public bool SendBatch(List<string> msgList)
         {
             try
             {
-                if (ConnectionExists())
+                if (SetUpConnection())
                 {
                     using (var channel = _connection.CreateModel())
                     {
@@ -65,7 +65,7 @@ namespace Nxa.Plugins.RabbitMQ
                         channel.ExchangeDeclare(exchange: Plugins.Settings.Default.RMQ.Exchange, type: ExchangeType.Fanout, durable: false, autoDelete: false, arguments: null);
 
                         var basicPublishBatch = channel.CreateBasicPublishBatch();
-                        foreach (var block in blockJsonList)
+                        foreach (var block in msgList)
                         {
                             var body = Encoding.UTF8.GetBytes(block);
                             basicPublishBatch.Add(exchange: Plugins.Settings.Default.RMQ.Exchange, routingKey: Plugins.Settings.Default.RMQ.Queue, mandatory: true, properties: null, new ReadOnlyMemory<byte>(body));
@@ -74,7 +74,7 @@ namespace Nxa.Plugins.RabbitMQ
 
                         if (Plugins.Settings.Default.RMQ.ConfirmSelect)
                         {
-                            var result = channel.WaitForConfirms(_confirmWaitTime);
+                            var result = channel.WaitForConfirms(_confirmWaitTimeSec);
                             return result;
                         }
                         return true;
@@ -91,7 +91,7 @@ namespace Nxa.Plugins.RabbitMQ
             }
         }
 
-        private bool ConnectionExists()
+        private bool SetUpConnection()
         {
             if (_connection != null && _connection.IsOpen)
                 return true;
@@ -145,17 +145,9 @@ namespace Nxa.Plugins.RabbitMQ
         #region dispose
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        private void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                CloseConnection();
-                ConsoleWriter.UpdateRmqConnection("Closed");
-            }
+            CloseConnection();
+            ConsoleWriter.UpdateRmqConnection("Closed");
+            //GC.SuppressFinalize(this);
         }
 
         #endregion

@@ -2,7 +2,7 @@
 
 namespace Nxa.Plugins
 {
-    internal class Settings
+    internal sealed class Settings
     {
         public bool Active { get; }
         public bool AutoStart { get; }

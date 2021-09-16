@@ -24,7 +24,7 @@ namespace Nxa.Plugins
                 Settings.Load(GetConfiguration());
                 if (!Settings.Default.Active)
                 {
-                    Console.WriteLine("NXABlockListener turned off. Check config file.");
+                    Console.Error.WriteLine("NXABlockListener turned off. Check config file.");
                     return;
                 }
                 Console.WriteLine($"Load plugin NXABlockListener configuration; Network: {Settings.Default.Network};");
@@ -32,7 +32,7 @@ namespace Nxa.Plugins
             catch (Exception e)
             {
                 Settings.Load();
-                Console.WriteLine($"NXABlockListener configuration cannot be loaded. Error: {e.Message}");
+                Console.Error.WriteLine($"NXABlockListener configuration cannot be loaded. Error: {e.Message}");
             }
         }
 
@@ -48,10 +48,8 @@ namespace Nxa.Plugins
             }
             catch (Exception e)
             {
-                Console.WriteLine($"NXABlockListener cannot load. Error: {e.Message}");
-
-                if (blockListenerManager != null)
-                    blockListenerManager.Dispose();
+                Console.Error.WriteLine($"NXABlockListener cannot load. Error: {e.Message}");
+                blockListenerManager?.Dispose();
             }
         }
 
@@ -108,7 +106,7 @@ namespace Nxa.Plugins
             }
             catch (Exception e)
             {
-                Console.WriteLine($"NXABlockListener cannot show state. Error: {e.Message}");
+                Console.Error.WriteLine($"NXABlockListener cannot show state. Error: {e.Message}");
             }
         }
 
@@ -119,7 +117,7 @@ namespace Nxa.Plugins
             ConsoleWriter.Dispose();
             if (blockListenerManager != null)
                 blockListenerManager.Dispose();
-            GC.SuppressFinalize(this);
+            //GC.SuppressFinalize(this);
         }
         #endregion
     }

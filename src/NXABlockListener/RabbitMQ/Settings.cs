@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Nxa.Plugins.RabbitMQ
 {
-    public class Settings
+    internal sealed class Settings
     {
         public class HostAddress
         {

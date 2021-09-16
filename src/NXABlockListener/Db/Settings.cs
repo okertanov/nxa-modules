@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Nxa.Plugins.Db
 {
-    public class Settings
+    internal sealed class Settings
     {
         public string Path { get; }
         public Settings(IConfigurationSection section)

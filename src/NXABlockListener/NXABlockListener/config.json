@@ -1,14 +1,14 @@
 {
   "PluginConfiguration": {
     "Active": true,
-    "AutoStart": false,
+    "AutoStart": true,
     "Network": 199,
     "StartBlock": 0,
     "RMQ": {
       "VirtualHost": "/",
-      "RMQHost": [ "localhost:5672", "127.0.0.1:5672" ],
+      "RMQHost": [ "localhost:5672" ],
       "Queue": "block-queue",
-      "Exchange": "block-listener",
+      "Exchange": "org.nxa.blockchain.listener.block",
       "Username": "guest",
       "Password": "guest",
       "ConfirmSelect": true
