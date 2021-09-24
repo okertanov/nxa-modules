@@ -114,10 +114,9 @@ namespace Nxa.Plugins
         #region dispose
         public override void Dispose()
         {
-            ConsoleWriter.Dispose();
-            if (blockListenerManager != null)
-                blockListenerManager.Dispose();
-            //GC.SuppressFinalize(this);
+            ConsoleWriter.Release();
+            blockListenerManager?.Dispose();
+            GC.SuppressFinalize(this);
         }
         #endregion
     }

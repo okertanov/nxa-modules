@@ -13,18 +13,20 @@ namespace Nxa.Plugins
 {
     public class BlockListenerManager : IDisposable
     {
-        public bool Active => _active;
-        private bool _active = false;
+        public bool Active { get; private set; }
 
-        private readonly TimeSpan _retryWaitTimeSec = new(0, 0, 5);
-        private const int loadAmount = 1000;
-        private static BlockingCollection<Block> incomingBlocks = new();
-        private ConcurrentBag<Task> tasks;
+        private const int LoadAmount = 1000;
+        private static BlockingCollection<Block> IncomingBlocks = new();
+
+        private readonly TimeSpan retryWaitTimeSec = new(0, 0, 5);
         private CancellationTokenSource tokenSource;
+        private Task unsentBlocksTask;
+        private Task blockListenerTask;
 
         private readonly WeakReference<NeoSystem> systemRef;
         private RabbitMQ.RabbitMQ rabbitMQ;
         private LevelDbManager levelDbManager;
+
 
         public BlockListenerManager(NeoSystem newSystem)
         {
@@ -37,19 +39,19 @@ namespace Nxa.Plugins
 
         public static void AddBlock(Block block)
         {
-            incomingBlocks.Add(block);
+            IncomingBlocks.Add(block);
         }
 
         public void StartBlockListener()
         {
-            if (_active)
+            if (Active)
                 return;
             SetUpBlockListener();
         }
 
         public void StopBlockListener()
         {
-            if (!_active)
+            if (!Active)
                 return;
             Stop();
         }
@@ -57,7 +59,6 @@ namespace Nxa.Plugins
         private void SetUpBlockListener()
         {
             tokenSource = new CancellationTokenSource();
-            tasks = new ConcurrentBag<Task>();
 
             rabbitMQ?.Dispose();
             levelDbManager?.Dispose();
@@ -65,9 +66,9 @@ namespace Nxa.Plugins
             rabbitMQ = new();
             levelDbManager = new();
 
-            incomingBlocks = new();
+            IncomingBlocks = new();
 
-            tasks.Add(Task.Run(() => UnsentBlockProcessing(tokenSource.Token), tokenSource.Token));
+            unsentBlocksTask = Task.Run(() => UnsentBlockProcessing(tokenSource.Token), tokenSource.Token);
             SetBlockListenerState(true);
         }
 
@@ -81,7 +82,7 @@ namespace Nxa.Plugins
 
             //send unsent blocks as batch
             uint activeBlockIndex = rmqBlockIndex;
-            if (systemRef.TryGetTarget(out NeoSystem system))
+            if (!systemRef.TryGetTarget(out NeoSystem system))
             {
                 ConsoleWriter.WriteLine("Cannot sync unsent blocks. Cannot access NeoSystem");
                 SetBlockListenerState(false);
@@ -93,20 +94,20 @@ namespace Nxa.Plugins
                 var currentBlockIndex = NativeContract.Ledger.CurrentIndex(snapshot);
                 if (rmqBlockIndex < currentBlockIndex)
                 {
-                    ConsoleWriter.WriteLine($"Load and send unsent blocs to RMQ. Load by {loadAmount} and send");
+                    ConsoleWriter.WriteLine($"Load and send unsent blocs to RMQ. Load by {LoadAmount} and send");
                     ConsoleWriter.WriteLine($"RMQ block index {rmqBlockIndex} and current block index {currentBlockIndex}");
 
                     int i = 0;
                     List<Block> unsentBlocks = new();
                     while (activeBlockIndex < currentBlockIndex)
                     {
-                        CheckDisposeCancellationToken(token);
+                        CheckAndDisposeCancellationToken(token);
 
                         var block = NativeContract.Ledger.GetBlock(snapshot, activeBlockIndex);
                         unsentBlocks.Add(block);
 
                         i++;
-                        if (i == loadAmount)
+                        if (i == LoadAmount)
                         {
                             rmqBlockIndex = TrySendRMQ(rmqBlockIndex, unsentBlocks, token);
                             ConsoleWriter.WriteLine($"RMQ block index {rmqBlockIndex} and current block index {currentBlockIndex}");
@@ -126,32 +127,29 @@ namespace Nxa.Plugins
             }
 
             //start block listener
-            tasks.Add(Task.Run(() => BlockListner(token), token));
+            blockListenerTask = Task.Run(() => BlockListner(token), token);
         }
 
         private void BlockListner(CancellationToken token)
         {
             while (true)
             {
-                //CheckCancellationToken(token);
-                //var block = incomingBlocks.Take(CancellationToken.None);
-
                 Block block = null;
-                try { block = incomingBlocks.Take(token); }
-                catch { CheckDisposeCancellationToken(token); }
+                try { block = IncomingBlocks.Take(token); }
+                catch { CheckAndDisposeCancellationToken(token); }
 
                 bool blocksSent = false;
                 while (!blocksSent)
                 {
-                    CheckDisposeCancellationToken(token);
+                    CheckAndDisposeCancellationToken(token);
 
                     uint rmqBlockIndex = block.Index;
                     blocksSent = rabbitMQ.Send(block.ToJson(ProtocolSettings.Default).AsString());
                     if (!blocksSent)
                     {
-                        CheckDisposeCancellationToken(token);
+                        CheckAndDisposeCancellationToken(token);
                         ConsoleWriter.WriteLine("Failed to send blocks to RMQ. Wait 5sec and try again.");
-                        Thread.Sleep(_retryWaitTimeSec);
+                        Thread.Sleep(retryWaitTimeSec);
                     }
                     else
                     {
@@ -177,15 +175,15 @@ namespace Nxa.Plugins
             bool blocksSent = false;
             while (!blocksSent)
             {
-                CheckDisposeCancellationToken(token);
+                CheckAndDisposeCancellationToken(token);
 
                 blocksSent = rabbitMQ.SendBatch(blocks);
                 if (!blocksSent)
                 {
-                    CheckDisposeCancellationToken(token);
+                    CheckAndDisposeCancellationToken(token);
 
                     ConsoleWriter.WriteLine("Failed to send blocks to RMQ. Wait 5sec and try again.");
-                    Thread.Sleep(_retryWaitTimeSec);
+                    Thread.Sleep(retryWaitTimeSec);
                 }
                 else
                 {
@@ -200,20 +198,35 @@ namespace Nxa.Plugins
 
         private void SetBlockListenerState(bool active)
         {
-            _active = active;
+            Active = active;
             ConsoleWriter.UpdateBlockListenerState(active);
         }
 
-        #region dispose
-        public void Dispose()
+        private void CheckAndDisposeCancellationToken(CancellationToken token)
         {
-            Stop();
-            //GC.SuppressFinalize(this);
+            if (token.IsCancellationRequested)
+            {
+                levelDbManager?.Dispose();
+                rabbitMQ?.Dispose();
+                IncomingBlocks?.Dispose();
+                token.ThrowIfCancellationRequested();
+            }
         }
+
         private void Stop()
         {
-            if (_active)
+            if (Active)
             {
+                List<Task> tasks = new List<Task>();
+                if (unsentBlocksTask?.IsCompleted == false)
+                {
+                    tasks.Add(unsentBlocksTask);
+                }
+                if (blockListenerTask?.IsCompleted == false)
+                {
+                    tasks.Add(blockListenerTask);
+                }
+
                 tokenSource.Cancel();
                 try
                 {
@@ -230,16 +243,12 @@ namespace Nxa.Plugins
                 SetBlockListenerState(false);
             }
         }
-        private void CheckDisposeCancellationToken(CancellationToken token)
+
+        public void Dispose()
         {
-            if (token.IsCancellationRequested)
-            {
-                levelDbManager?.Dispose();
-                rabbitMQ?.Dispose();
-                incomingBlocks?.Dispose();
-                token.ThrowIfCancellationRequested();
-            }
+            Stop();
+            GC.SuppressFinalize(this);
         }
-        #endregion
+
     }
 }

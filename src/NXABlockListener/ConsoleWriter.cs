@@ -7,38 +7,39 @@ namespace Nxa.Plugins
 {
     public static class ConsoleWriter
     {
-        private static readonly BlockingCollection<string> blockingCollection = new();
-        private static bool writeToScreen = false;
-        private static uint rmqBlockIndex = 0;
-        private static string rmqConnection = "Unconnected";
-        private static string blockListenerState = "Not started";
+        private static bool WriteToScreen = false;
+
+        private static readonly BlockingCollection<string> BblockingCollection = new();
+        private static uint RmqBlockIndex = 0;
+        private static string RmqConnection = "Unconnected";
+        private static string BlockListenerState = "Not started";
 
         static ConsoleWriter()
         {
         }
         public static void WriteLine(string value)
         {
-            if (writeToScreen)
-                blockingCollection.Add(value);
+            if (WriteToScreen)
+                BblockingCollection.Add(value);
         }
         public static void UpdateRmqBlock(uint index)
         {
-            rmqBlockIndex = index;
+            RmqBlockIndex = index;
         }
         public static void UpdateRmqConnection(string conn)
         {
-            rmqConnection = conn;
+            RmqConnection = conn;
         }
         public static void UpdateBlockListenerState(bool active)
         {
             if (active)
-                blockListenerState = "Active";
+                BlockListenerState = "Active";
             else
-                blockListenerState = "Inactive";
+                BlockListenerState = "Inactive";
         }
         public static void ShowState()
         {
-            writeToScreen = true;
+            WriteToScreen = true;
             var cancel = new CancellationTokenSource();
 
             Console.CursorVisible = false;
@@ -53,12 +54,12 @@ namespace Nxa.Plugins
                     if (left != 0) { left = 0; }
 
                     Console.SetCursorPosition(0, 0);
-                    WriteLineWithoutFlicker($"NXABlockListener state: {blockListenerState}", Console.WindowWidth - 1);
-                    WriteLineWithoutFlicker($"RMQ block: {rmqBlockIndex}  RMQ connection: {rmqConnection}", Console.WindowWidth - 1);
+                    WriteLineWithoutFlicker($"NXABlockListener state: {BlockListenerState}", Console.WindowWidth - 1);
+                    WriteLineWithoutFlicker($"RMQ block: {RmqBlockIndex}  RMQ connection: {RmqConnection}", Console.WindowWidth - 1);
                     WriteLineWithoutFlicker($"", Console.WindowWidth - 1);
 
                     Console.SetCursorPosition(left: left, top: top);
-                    string message = blockingCollection.Take(cancel.Token);
+                    string message = BblockingCollection.Take(cancel.Token);
                     WriteLineWithoutFlicker($"{message}", Console.WindowWidth - 1);
                 }
             });
@@ -69,7 +70,7 @@ namespace Nxa.Plugins
             Console.WriteLine();
             Console.CursorVisible = true;
 
-            writeToScreen = false;
+            WriteToScreen = false;
         }
 
         private static void WriteLineWithoutFlicker(string message = "", int maxWidth = 80)
@@ -95,12 +96,10 @@ namespace Nxa.Plugins
             return readLineTask.Result;
         }
 
-        #region dispose
-        public static void Dispose()
+        public static void Release()
         {
             _shutdownToken.Cancel();
         }
 
-        #endregion
     }
 }

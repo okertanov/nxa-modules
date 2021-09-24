@@ -9,12 +9,12 @@ namespace Nxa.Plugins.Db
     {
         private DB db;
 
-        private const string rmq_block_index = "rmq_block_index";
+        private const string RmqBlockIndex = "rmq_block_index";
         private readonly byte[] rmq_block_index_key;
 
         public LevelDbManager()
         {
-            rmq_block_index_key = Encoding.ASCII.GetBytes(rmq_block_index);
+            rmq_block_index_key = Encoding.ASCII.GetBytes(RmqBlockIndex);
             string path = string.Format(Plugins.Settings.Default.Db.Path, Plugins.Settings.Default.Network.ToString("X8"));
             db = DB.Open(Path.GetFullPath(path), new Options { CreateIfMissing = true });
         }
@@ -34,14 +34,12 @@ namespace Nxa.Plugins.Db
             db.Put(WriteOptions.Default, rmq_block_index_key, value);
         }
 
-        #region dispose
         public void Dispose()
         {
             db?.Dispose();
             db = null;
-            //GC.SuppressFinalize(this);
+            GC.SuppressFinalize(this);
         }
 
-        #endregion
     }
 }
