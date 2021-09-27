@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Nxa.Plugins
 {
-    public class NXABlockListener : Plugin, IPersistencePlugin
+    public class NXABlockListenerPlugin : Plugin, IPersistencePlugin
     {
 
         public override string Name => "NXABlockListener";
@@ -62,7 +62,6 @@ namespace Nxa.Plugins
                 BlockListenerManager.AddBlock(block);
         }
 
-
         [ConsoleCommand("stop blocklistener", Category = "BlockListener", Description = "Stop block listener service (NXABlockListener)")]
         public void StopBlockListener()
         {
@@ -110,14 +109,11 @@ namespace Nxa.Plugins
             }
         }
 
-
-        #region dispose
         public override void Dispose()
         {
             ConsoleWriter.Release();
             blockListenerManager?.Dispose();
             GC.SuppressFinalize(this);
         }
-        #endregion
     }
 }

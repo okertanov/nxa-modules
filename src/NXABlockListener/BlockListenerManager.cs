@@ -23,14 +23,16 @@ namespace Nxa.Plugins
         private Task unsentBlocksTask;
         private Task blockListenerTask;
 
-        private readonly WeakReference<NeoSystem> systemRef;
+        //private readonly WeakReference<NeoSystem> systemRef;
+        private readonly NeoSystem system;
         private RabbitMQ.RabbitMQ rabbitMQ;
         private LevelDbManager levelDbManager;
 
 
         public BlockListenerManager(NeoSystem newSystem)
         {
-            systemRef = new WeakReference<NeoSystem>(newSystem, false);
+            //systemRef = new WeakReference<NeoSystem>(newSystem, false);
+            system = newSystem;
             if (Plugins.Settings.Default.AutoStart)
             {
                 SetUpBlockListener();
@@ -82,12 +84,12 @@ namespace Nxa.Plugins
 
             //send unsent blocks as batch
             uint activeBlockIndex = rmqBlockIndex;
-            if (!systemRef.TryGetTarget(out NeoSystem system))
-            {
-                ConsoleWriter.WriteLine("Cannot sync unsent blocks. Cannot access NeoSystem");
-                SetBlockListenerState(false);
-                return;
-            }
+            //if (!systemRef.TryGetTarget(out NeoSystem system))
+            //{
+            //    ConsoleWriter.WriteLine("Cannot sync unsent blocks. Cannot access NeoSystem");
+            //    SetBlockListenerState(false);
+            //    return;
+            //}
 
             using (SnapshotCache snapshot = system.GetSnapshot())
             {
@@ -144,7 +146,7 @@ namespace Nxa.Plugins
                     CheckAndDisposeCancellationToken(token);
 
                     uint rmqBlockIndex = block.Index;
-                    blocksSent = rabbitMQ.Send(block.ToJson(ProtocolSettings.Default).AsString());
+                    blocksSent = rabbitMQ.Send(block.ToJson(system.Settings).AsString());
                     if (!blocksSent)
                     {
                         CheckAndDisposeCancellationToken(token);
@@ -169,7 +171,7 @@ namespace Nxa.Plugins
             foreach (var block in unsentBlocks)
             {
                 rmqBlockIndex = block.Index;
-                blocks.Add(block.ToJson(ProtocolSettings.Default).AsString());
+                blocks.Add(block.ToJson(system.Settings).AsString());
             }
 
             bool blocksSent = false;
