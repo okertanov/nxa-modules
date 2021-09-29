@@ -1,4 +1,7 @@
-﻿using Neo;
+﻿using Akka.Actor;
+using Neo;
+using Neo.IO.Json;
+using Neo.Network.P2P;
 using Neo.Plugins;
 using System;
 using System.Collections.Generic;
@@ -17,5 +20,13 @@ namespace Nxa.Plugins
             this.system = system;
         }
 
+
+        [RpcMethod]
+        protected virtual JObject HealthCheck(JArray _params)
+        {
+            JObject result = new JObject();
+            result["success"] = true;
+            return result;
+        }
     }
 }

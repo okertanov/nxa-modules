@@ -5,14 +5,6 @@
     <Configurations>Debug;Release;LocalWindows_Debug</Configurations>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Utility.xcs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="Utility.xcs" />
-  </ItemGroup>
-
 
   <ItemGroup>
 	<ProjectReference Include="..\..\..\neo-modules\src\RpcClient\RpcClient.csproj" />

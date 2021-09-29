@@ -19,7 +19,7 @@ namespace Nxa.Plugins
         [RpcMethod]
         protected virtual JObject GetBalance(JArray _params)
         {
-            UInt160 address = _params[0].ToScriptHash(ProtocolSettings.Default);
+            UInt160 address = _params[0].ToScriptHash(system.Settings);
             UInt160 asset_id;
             switch (_params[1].AsString())
             {
@@ -33,7 +33,6 @@ namespace Nxa.Plugins
                     asset_id = UInt160.Parse(_params[1].AsString());
                     break;
             }
-            //bool verbose = _params.Count >= 3 && _params[2].AsBoolean();
 
             using (var snapshot = system.GetSnapshot())
             {
@@ -86,7 +85,7 @@ namespace Nxa.Plugins
             var result = new JObject();
             result["address"] = scriptHash.ToAddress(system.Settings.AddressVersion);
             result["pubkey"] = key.PublicKey.ToString();
-            result["privkey"] = key.PrivateKey.ToHexString().ToString();
+            result["privkey"] = key.Export();
             result["scripthash"] = scriptHash.ToString();
 
             return result;

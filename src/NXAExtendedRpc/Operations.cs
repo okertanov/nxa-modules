@@ -1,0 +1,259 @@
+﻿using Neo.ConsoleService;
+using Neo.Cryptography.ECC;
+using Neo.IO.Json;
+using Neo.Network.P2P.Payloads;
+using Neo.Persistence;
+using Neo.Plugins;
+using Neo.SmartContract;
+using Neo.SmartContract.Native;
+using Neo.VM;
+using Neo.VM.Types;
+using Neo.Wallets;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using System.Text;
+using System.Threading.Tasks;
+using Akka.Actor;
+using Neo.IO;
+using Neo.Cryptography;
+using Nxa.Plugins.HelperObjects;
+using Neo;
+
+namespace Nxa.Plugins
+{
+    internal static class Operations
+    {
+        public const long TestModeGas = 20_00000000;
+
+        /// <summary>
+        /// Make and send transaction with script, sender
+        /// </summary>
+        /// <param name="system">NeoSystem</param>
+        /// <param name="script">script</param>
+        /// <param name="account">sender</param>
+        /// <param name="gas">Max fee for running the script</param>
+        public static JObject CreateSendTransaction(NeoSystem system, byte[] script, OperationWallet wallet, bool signAndSend = false, UInt160 account = null, long gas = TestModeGas)
+        {
+            Signer[] signers = System.Array.Empty<Signer>();
+            var snapshot = system.StoreView;
+
+            if (account != null)
+            {
+                signers = wallet.GetAccounts()
+                .Where(p => !p.Lock && !p.WatchOnly && p.ScriptHash == account && NativeContract.GAS.BalanceOf(snapshot, p.ScriptHash).Sign > 0)
+                .Select(p => new Signer() { Account = p.ScriptHash, Scopes = WitnessScope.CalledByEntry })
+                .ToArray();
+            }
+
+            try
+            {
+                Transaction tx = wallet.MakeTransaction(snapshot, script, account, signers, maxGas: gas);
+
+                if (signAndSend)
+                {
+                    using (ApplicationEngine engine = ApplicationEngine.Run(tx.Script, snapshot, container: tx, settings: system.Settings, gas: gas))
+                    {
+                        if (engine.State == VMState.FAULT)
+                        {
+                            throw new RpcException(-500, Utility.GetExecutionOutput(engine, true, tx.Script).AsString());
+                        }
+                    }
+                    return SignAndSendTx(system, system.StoreView, tx, wallet, true);
+                }
+
+                return tx.ToJson(system.Settings);
+            }
+            catch (InvalidOperationException e)
+            {
+                //-300 should be 'Insufficient funds'
+                throw new RpcException(-500, Utility.GetExceptionMessage(e));
+            }
+
+        }
+
+
+        /// <summary>
+        /// Calculates the network fee for the specified transaction.
+        /// </summary>
+        /// <param name="system">NeoSystem</param>
+        /// <param name="snapshot">The snapshot used to read data.</param>
+        /// <param name="tx">The transaction to calculate.</param>
+        /// <returns>The network fee of the transaction.</returns>
+        public static JObject SignAndSendTx(NeoSystem system, DataCache snapshot, Transaction tx, OperationWallet wallet, bool send = false)
+        {
+            ContractParametersContext context;
+            try
+            {
+                context = new ContractParametersContext(snapshot, tx, system.Settings.Network);
+            }
+            catch (InvalidOperationException e)
+            {
+                throw new RpcException(-500, "Failed creating contract params: " + Utility.GetExceptionMessage(e));
+            }
+            Sign(system, context, wallet);
+
+            if (send)
+            {
+                if (context.Completed)
+                {
+                    tx.Witnesses = context.GetWitnesses();
+                    system.Blockchain.Tell(tx);
+
+                    return (JString)("Signed and relayed transaction with hash:" + $"{tx.Hash}");
+                    //ConsoleHelper.Info("Signed and relayed transaction with hash:\n", $"{tx.Hash}");
+                }
+                else
+                {
+                    return (JString)("Incomplete signature:" + $"{context}");
+                    //ConsoleHelper.Info("Incomplete signature:\n", $"{context}");
+                }
+            }
+            else
+            {
+                return tx.ToJson(system.Settings);
+            }
+        }
+
+
+        /// <summary>
+        /// Signs the <see cref="IVerifiable"/> in the specified <see cref="ContractParametersContext"/> with the wallet.
+        /// </summary>
+        /// <param name="system">NeoSystem</param>
+        /// <param name="context">The <see cref="ContractParametersContext"/> to be used.</param>
+        /// <returns><see langword="true"/> if the signature is successfully added to the context; otherwise, <see langword="false"/>.</returns>
+        /// 
+        public static bool Sign(NeoSystem system, ContractParametersContext context, OperationWallet wallet)
+        {
+            if (context.Network != system.Settings.Network) return false;
+            bool fSuccess = false;
+            foreach (UInt160 scriptHash in context.ScriptHashes)
+            {
+                WalletAccount account = wallet.GetAccount(scriptHash);
+
+                if (account != null)
+                {
+                    // Try to sign self-contained multiSig
+
+                    Contract multiSigContract = account.Contract;
+
+                    if (multiSigContract != null &&
+                        multiSigContract.Script.IsMultiSigContract(out int m, out ECPoint[] points))
+                    {
+                        foreach (var point in points)
+                        {
+                            account = wallet.GetAccount(point);
+                            if (account?.HasKey != true) continue;
+                            KeyPair key = account.GetKey();
+                            byte[] signature = context.Verifiable.Sign(key, context.Network);
+                            fSuccess |= context.AddSignature(multiSigContract, key.PublicKey, signature);
+                            if (fSuccess) m--;
+                            if (context.Completed || m <= 0) break;
+                        }
+                        continue;
+                    }
+                    else if (account.HasKey)
+                    {
+                        // Try to sign with regular accounts
+                        KeyPair key = account.GetKey();
+                        byte[] signature = context.Verifiable.Sign(key, context.Network);
+                        fSuccess |= context.AddSignature(account.Contract, key.PublicKey, signature);
+                        continue;
+                    }
+                }
+
+                // Try Smart contract verification
+
+                var contract = NativeContract.ContractManagement.GetContract(context.Snapshot, scriptHash);
+
+                if (contract != null)
+                {
+                    var deployed = new DeployedContract(contract);
+
+                    // Only works with verify without parameters
+
+                    if (deployed.ParameterList.Length == 0)
+                    {
+                        fSuccess |= context.Add(deployed);
+                    }
+                }
+            }
+
+            return fSuccess;
+        }
+
+
+        /// <summary>
+        /// Process "invoke" command
+        /// </summary>
+        /// <param name="system">NeoSystem</param>
+        /// <param name="scriptHash">Script hash</param>
+        /// <param name="operation">Operation</param>
+        /// <param name="result">Result</param>
+        /// <param name="verificable">Transaction</param>
+        /// <param name="contractParameters">Contract parameters</param>
+        /// <param name="showStack">Show result stack if it is true</param>
+        /// <param name="gas">Max fee for running the script</param>
+        /// <returns>Return true if it was successful</returns>
+        public static void OnInvokeWithResult(NeoSystem system, UInt160 scriptHash, string operation, out StackItem result, IVerifiable verificable = null, JArray contractParameters = null, bool showStack = true, long gas = TestModeGas)
+        {
+            List<ContractParameter> parameters = new List<ContractParameter>();
+
+            if (contractParameters != null)
+            {
+                foreach (var contractParameter in contractParameters)
+                {
+                    parameters.Add(ContractParameter.FromJson(contractParameter));
+                }
+            }
+
+            ContractState contract = NativeContract.ContractManagement.GetContract(system.StoreView, scriptHash);
+            if (contract == null)
+            {
+                throw new RpcException(-500, "Contract does not exist.");
+                //ConsoleHelper.Error("Contract does not exist.");
+                //result = StackItem.Null;
+                //return false;
+            }
+            else
+            {
+                if (contract.Manifest.Abi.GetMethod(operation, parameters.Count) == null)
+                {
+                    throw new RpcException(-500, "This method does not not exist in this contract.");
+                    //ConsoleHelper.Error("This method does not not exist in this contract.");
+                    //result = StackItem.Null;
+                    //return false;
+                }
+            }
+
+            byte[] script;
+
+            using (ScriptBuilder scriptBuilder = new ScriptBuilder())
+            {
+                scriptBuilder.EmitDynamicCall(scriptHash, operation, parameters.ToArray());
+                script = scriptBuilder.ToArray();
+                //ConsoleHelper.Info("Invoking script with: ", $"'{script.ToBase64String()}'");
+            }
+
+            if (verificable is Transaction tx)
+            {
+                tx.Script = script;
+            }
+
+            using ApplicationEngine engine = ApplicationEngine.Run(script, system.StoreView, container: verificable, settings: system.Settings, gas: gas);
+            //Utility.PrintExecutionOutput(engine, showStack);
+            result = engine.State == VMState.FAULT ? null : engine.ResultStack.Peek();
+
+            if (engine.State == VMState.FAULT)
+            {
+                throw new RpcException(-500, Utility.GetExecutionOutput(engine, true, script).AsString());
+            }
+            //return engine.State != VMState.FAULT;
+        }
+
+
+
+
+    }
+}

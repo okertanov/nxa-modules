@@ -10,7 +10,6 @@ using System.Net;
 
 namespace Nxa.Plugins
 {
-
     internal sealed class Settings
     {
         public IReadOnlyList<RpcServerSettings> Servers { get; }
