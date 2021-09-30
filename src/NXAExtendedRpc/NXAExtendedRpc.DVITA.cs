@@ -1,6 +1,5 @@
 ﻿using Neo;
 using Neo.IO.Json;
-using Neo.Network.RPC;
 using Neo.Persistence;
 using Neo.Plugins;
 using Neo.SmartContract;

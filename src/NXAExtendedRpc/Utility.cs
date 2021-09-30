@@ -1,10 +1,12 @@
 ﻿using Neo;
 using Neo.ConsoleService;
+using Neo.Cryptography.ECC;
 using Neo.IO.Json;
 using Neo.Network.P2P.Payloads;
 using Neo.SmartContract;
 using Neo.SmartContract.Native;
 using Neo.VM;
+using Neo.Wallets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,33 +63,103 @@ namespace Nxa.Plugins
             return result;
         }
 
+        public static KeyPair GetKeyPair(string key)
+        {
+            if (string.IsNullOrEmpty(key)) { throw new ArgumentNullException(nameof(key)); }
+            if (key.StartsWith("0x")) { key = key[2..]; }
+
+            if (key.Length == 52)
+            {
+                return new KeyPair(Wallet.GetPrivateKeyFromWIF(key));
+            }
+            else if (key.Length == 64)
+            {
+                return new KeyPair(key.HexToBytes());
+            }
+
+            throw new FormatException();
+        }
+
+        public static JObject TransactionAndContextToJson(Transaction tx, ProtocolSettings protocolSettings, ContractParametersContext context = null)
+        {
+            JObject json = new JObject();
+            json["tx"] = TransactionToJson(tx, protocolSettings);
+            if (context != null)
+                json["context"] = context.ToJson();
+            return json;
+        }
+
+        public static JObject TransactionToJson(Transaction tx, ProtocolSettings protocolSettings)
+        {
+            if (tx.Witnesses == null)
+                tx.Witnesses = new Witness[] { };
+
+            JObject json = tx.ToJson(protocolSettings);
+            json["sysfee"] = tx.SystemFee.ToString();
+            json["netfee"] = tx.NetworkFee.ToString();
+            return json;
+        }
+
+        public static Transaction TransactionFromJson(JObject json, ProtocolSettings protocolSettings)
+        {
+            return new Transaction
+            {
+                Version = byte.Parse(json["version"].AsString()),
+                Nonce = uint.Parse(json["nonce"].AsString()),
+                Signers = ((JArray)json["signers"]).Select(p => SignerFromJson(p, protocolSettings)).ToArray(),
+                SystemFee = long.Parse(json["sysfee"].AsString()),
+                NetworkFee = long.Parse(json["netfee"].AsString()),
+                ValidUntilBlock = uint.Parse(json["validuntilblock"].AsString()),
+                Attributes = ((JArray)json["attributes"]).Select(p => TransactionAttributeFromJson(p)).ToArray(),
+                Script = Convert.FromBase64String(json["script"].AsString()),
+                Witnesses = ((JArray)json["witnesses"]).Select(p => WitnessFromJson(p)).ToArray()
+            };
+        }
+
+        public static Signer SignerFromJson(JObject json, ProtocolSettings protocolSettings)
+        {
+            return new Signer
+            {
+                Account = json["account"].ToScriptHash(protocolSettings),
+                Scopes = (WitnessScope)Enum.Parse(typeof(WitnessScope), json["scopes"].AsString()),
+                AllowedContracts = ((JArray)json["allowedcontracts"])?.Select(p => p.ToScriptHash(protocolSettings)).ToArray(),
+                AllowedGroups = ((JArray)json["allowedgroups"])?.Select(p => ECPoint.Parse(p.AsString(), ECCurve.Secp256r1)).ToArray()
+            };
+        }
+
+        public static TransactionAttribute TransactionAttributeFromJson(JObject json)
+        {
+            TransactionAttributeType usage = Enum.Parse<TransactionAttributeType>(json["type"].AsString());
+            return usage switch
+            {
+                TransactionAttributeType.HighPriority => new HighPriorityAttribute(),
+                TransactionAttributeType.OracleResponse => new OracleResponse()
+                {
+                    Id = (ulong)json["id"].AsNumber(),
+                    Code = Enum.Parse<OracleResponseCode>(json["code"].AsString()),
+                    Result = Convert.FromBase64String(json["result"].AsString()),
+                },
+                _ => throw new FormatException(),
+            };
+        }
+
+        public static Witness WitnessFromJson(JObject json)
+        {
+            return new Witness
+            {
+                InvocationScript = Convert.FromBase64String(json["invocation"].AsString()),
+                VerificationScript = Convert.FromBase64String(json["verification"].AsString())
+            };
+        }
+
+        public static UInt160 ToScriptHash(this JObject value, ProtocolSettings protocolSettings)
+        {
+            var addressOrScriptHash = value.AsString();
+
+            return addressOrScriptHash.Length < 40 ?
+                addressOrScriptHash.ToScriptHash(protocolSettings.AddressVersion) : UInt160.Parse(addressOrScriptHash);
+        }
 
 
-        //public static JObject BlockToJson(Block block, ProtocolSettings settings)
-        //{
-        //    JObject json = block.ToJson(settings);
-        //    json["tx"] = block.Transactions.Select(p => TransactionToJson(p, settings)).ToArray();
-        //    return json;
-        //}
-
-        //public static JObject TransactionToJson(Transaction tx, ProtocolSettings settings)
-        //{
-        //    JObject json = tx.ToJson(settings);
-        //    json["sysfee"] = tx.SystemFee.ToString();
-        //    json["netfee"] = tx.NetworkFee.ToString();
-        //    return json;
-        //}
-
-        //public static JObject NativeContractToJson(this NativeContract contract, ProtocolSettings settings)
-        //{
-        //    return new JObject
-        //    {
-        //        ["id"] = contract.Id,
-        //        ["hash"] = contract.Hash.ToString(),
-        //        ["nef"] = contract.Nef.ToJson(),
-        //        ["manifest"] = contract.Manifest.ToJson(),
-        //        ["updatehistory"] = settings.NativeUpdateHistory[contract.Name].Select(p => (JObject)p).ToArray()
-        //    };
-        //}
     }
 }

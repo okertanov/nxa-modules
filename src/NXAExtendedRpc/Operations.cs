@@ -1,5 +1,8 @@
-﻿using Neo.ConsoleService;
+﻿using Akka.Actor;
+using Neo;
+using Neo.Cryptography;
 using Neo.Cryptography.ECC;
+using Neo.IO;
 using Neo.IO.Json;
 using Neo.Network.P2P.Payloads;
 using Neo.Persistence;
@@ -9,17 +12,10 @@ using Neo.SmartContract.Native;
 using Neo.VM;
 using Neo.VM.Types;
 using Neo.Wallets;
+using Nxa.Plugins.HelperObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using Akka.Actor;
-using Neo.IO;
-using Neo.Cryptography;
-using Nxa.Plugins.HelperObjects;
-using Neo;
 
 namespace Nxa.Plugins
 {
@@ -34,7 +30,7 @@ namespace Nxa.Plugins
         /// <param name="script">script</param>
         /// <param name="account">sender</param>
         /// <param name="gas">Max fee for running the script</param>
-        public static JObject CreateSendTransaction(NeoSystem system, byte[] script, OperationWallet wallet, bool signAndSend = false, UInt160 account = null, long gas = TestModeGas)
+        public static JObject CreateSendTransaction(NeoSystem system, byte[] script, OperationWallet wallet, UInt160 account = null, long gas = TestModeGas)
         {
             Signer[] signers = System.Array.Empty<Signer>();
             var snapshot = system.StoreView;
@@ -51,19 +47,14 @@ namespace Nxa.Plugins
             {
                 Transaction tx = wallet.MakeTransaction(snapshot, script, account, signers, maxGas: gas);
 
-                if (signAndSend)
+                using (ApplicationEngine engine = ApplicationEngine.Run(tx.Script, snapshot, container: tx, settings: system.Settings, gas: gas))
                 {
-                    using (ApplicationEngine engine = ApplicationEngine.Run(tx.Script, snapshot, container: tx, settings: system.Settings, gas: gas))
+                    if (engine.State == VMState.FAULT)
                     {
-                        if (engine.State == VMState.FAULT)
-                        {
-                            throw new RpcException(-500, Utility.GetExecutionOutput(engine, true, tx.Script).AsString());
-                        }
+                        throw new RpcException(-500, Utility.GetExecutionOutput(engine, true, tx.Script).AsString());
                     }
-                    return SignAndSendTx(system, system.StoreView, tx, wallet, true);
                 }
-
-                return tx.ToJson(system.Settings);
+                return SignAndSendTx(system, system.StoreView, tx, wallet, true);
             }
             catch (InvalidOperationException e)
             {
@@ -73,6 +64,38 @@ namespace Nxa.Plugins
 
         }
 
+        /// <summary>
+        /// Make transaction with script, sender
+        /// </summary>
+        /// <param name="system">NeoSystem</param>
+        /// <param name="script">script</param>
+        /// <param name="account">sender</param>
+        /// <param name="gas">Max fee for running the script</param>
+        public static JObject CreateTransaction(NeoSystem system, byte[] script, OperationWallet wallet, UInt160 account = null, long gas = TestModeGas)
+        {
+            Signer[] signers = System.Array.Empty<Signer>();
+            var snapshot = system.StoreView;
+
+            if (account != null)
+            {
+                signers = wallet.GetAccounts()
+                .Where(p => !p.Lock && !p.WatchOnly && p.ScriptHash == account && NativeContract.GAS.BalanceOf(snapshot, p.ScriptHash).Sign > 0)
+                .Select(p => new Signer() { Account = p.ScriptHash, Scopes = WitnessScope.CalledByEntry })
+                .ToArray();
+            }
+
+            try
+            {
+                Transaction tx = wallet.MakeTransaction(snapshot, script, account, signers, maxGas: gas);
+
+                return Utility.TransactionAndContextToJson(tx, system.Settings);
+            }
+            catch (InvalidOperationException e)
+            {
+                //-300 should be 'Insufficient funds'
+                throw new RpcException(-500, Utility.GetExceptionMessage(e));
+            }
+        }
 
         /// <summary>
         /// Calculates the network fee for the specified transaction.
@@ -92,30 +115,38 @@ namespace Nxa.Plugins
             {
                 throw new RpcException(-500, "Failed creating contract params: " + Utility.GetExceptionMessage(e));
             }
-            Sign(system, context, wallet);
+
+            if (wallet != null)
+            {
+                Sign(system, context, wallet);
+                tx.Witnesses = context.GetWitnesses();
+            }
 
             if (send)
             {
+                //for now 
+                if (wallet == null)
+                {
+                    system.Blockchain.Tell(tx);
+                    return (JString)($"{tx.Hash}");
+                }
+
                 if (context.Completed)
                 {
-                    tx.Witnesses = context.GetWitnesses();
                     system.Blockchain.Tell(tx);
-
-                    return (JString)("Signed and relayed transaction with hash:" + $"{tx.Hash}");
-                    //ConsoleHelper.Info("Signed and relayed transaction with hash:\n", $"{tx.Hash}");
+                    return (JString)($"{tx.Hash}");
                 }
                 else
                 {
-                    return (JString)("Incomplete signature:" + $"{context}");
-                    //ConsoleHelper.Info("Incomplete signature:\n", $"{context}");
+                    throw new RpcException(-500, "Incomplete signature: " + $"{context}");
+                    //return (JString)("Incomplete signature:" + $"{context}");
                 }
             }
             else
             {
-                return tx.ToJson(system.Settings);
+                return Utility.TransactionAndContextToJson(tx, system.Settings, context);
             }
         }
-
 
         /// <summary>
         /// Signs the <see cref="IVerifiable"/> in the specified <see cref="ContractParametersContext"/> with the wallet.
@@ -135,7 +166,6 @@ namespace Nxa.Plugins
                 if (account != null)
                 {
                     // Try to sign self-contained multiSig
-
                     Contract multiSigContract = account.Contract;
 
                     if (multiSigContract != null &&
@@ -164,7 +194,6 @@ namespace Nxa.Plugins
                 }
 
                 // Try Smart contract verification
-
                 var contract = NativeContract.ContractManagement.GetContract(context.Snapshot, scriptHash);
 
                 if (contract != null)
@@ -172,7 +201,6 @@ namespace Nxa.Plugins
                     var deployed = new DeployedContract(contract);
 
                     // Only works with verify without parameters
-
                     if (deployed.ParameterList.Length == 0)
                     {
                         fSuccess |= context.Add(deployed);
@@ -212,18 +240,12 @@ namespace Nxa.Plugins
             if (contract == null)
             {
                 throw new RpcException(-500, "Contract does not exist.");
-                //ConsoleHelper.Error("Contract does not exist.");
-                //result = StackItem.Null;
-                //return false;
             }
             else
             {
                 if (contract.Manifest.Abi.GetMethod(operation, parameters.Count) == null)
                 {
                     throw new RpcException(-500, "This method does not not exist in this contract.");
-                    //ConsoleHelper.Error("This method does not not exist in this contract.");
-                    //result = StackItem.Null;
-                    //return false;
                 }
             }
 
@@ -233,7 +255,6 @@ namespace Nxa.Plugins
             {
                 scriptBuilder.EmitDynamicCall(scriptHash, operation, parameters.ToArray());
                 script = scriptBuilder.ToArray();
-                //ConsoleHelper.Info("Invoking script with: ", $"'{script.ToBase64String()}'");
             }
 
             if (verificable is Transaction tx)
@@ -242,14 +263,12 @@ namespace Nxa.Plugins
             }
 
             using ApplicationEngine engine = ApplicationEngine.Run(script, system.StoreView, container: verificable, settings: system.Settings, gas: gas);
-            //Utility.PrintExecutionOutput(engine, showStack);
             result = engine.State == VMState.FAULT ? null : engine.ResultStack.Peek();
 
             if (engine.State == VMState.FAULT)
             {
                 throw new RpcException(-500, Utility.GetExecutionOutput(engine, true, script).AsString());
             }
-            //return engine.State != VMState.FAULT;
         }
 
 

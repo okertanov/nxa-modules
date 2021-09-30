@@ -7,7 +7,6 @@
 
 
   <ItemGroup>
-	<ProjectReference Include="..\..\..\neo-modules\src\RpcClient\RpcClient.csproj" />
 	<ProjectReference Include="..\..\..\neo-modules\src\RpcServer\RpcServer.csproj" />
     <ProjectReference Include="..\..\..\neo-node\Neo.ConsoleService\Neo.ConsoleService.csproj" />
   </ItemGroup>

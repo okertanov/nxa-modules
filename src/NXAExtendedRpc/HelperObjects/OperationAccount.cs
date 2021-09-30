@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Neo.SmartContract;
+using Neo.Cryptography.ECC;
 
 namespace Nxa.Plugins.HelperObjects
 {
@@ -22,6 +23,15 @@ namespace Nxa.Plugins.HelperObjects
             this.Contract = new()
             {
                 Script = Contract.CreateSignatureRedeemScript(key.PublicKey),
+                ParameterList = new[] { ContractParameterType.Signature },
+            };
+        }
+
+        public OperationAccount(ECPoint pubKey, ProtocolSettings settings) : base(Contract.CreateSignatureRedeemScript(pubKey).ToScriptHash(), settings)
+        {
+            this.Contract = new()
+            {
+                Script = Contract.CreateSignatureRedeemScript(pubKey),
                 ParameterList = new[] { ContractParameterType.Signature },
             };
         }

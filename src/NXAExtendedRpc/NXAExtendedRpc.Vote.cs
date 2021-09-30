@@ -1,9 +1,6 @@
 ﻿using Neo;
-using Neo.ConsoleService;
 using Neo.Cryptography.ECC;
 using Neo.IO.Json;
-using Neo.Network.P2P.Payloads;
-using Neo.Persistence;
 using Neo.Plugins;
 using Neo.SmartContract;
 using Neo.SmartContract.Native;
@@ -25,7 +22,8 @@ namespace Nxa.Plugins
         protected virtual JObject RegisterCandidate(JArray _params)
         {
             string privateKey = _params[0].AsString();
-            KeyPair key = new(OperationWallet.GetPrivateKeyFromWIF(privateKey));
+
+            KeyPair key = Utility.GetKeyPair(privateKey);
 
             OperationAccount account = new OperationAccount(key, system.Settings);
             OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
@@ -39,14 +37,37 @@ namespace Nxa.Plugins
                 script = scriptBuilder.ToArray();
             }
 
-            return Operations.CreateSendTransaction(system, script, wallet, true, account.ScriptHash, (long)testGas);
+            return Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, account: account.ScriptHash, gas: (long)testGas);
+        }
+
+        [RpcMethod]
+        protected virtual JObject CreateRegisterCandidateTx(JArray _params)
+        {
+            string publicKey = _params[0].AsString();
+
+            ECPoint pubKey = ECPoint.Parse(publicKey, ECCurve.Secp256r1);
+
+            OperationAccount account = new OperationAccount(pubKey, system.Settings);
+            OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
+
+            var testGas = NativeContract.DVITA.GetRegisterPrice(system.StoreView) + (BigInteger)Math.Pow(10, NativeContract.GAS.Decimals) * 10;
+
+            byte[] script;
+            using (ScriptBuilder scriptBuilder = new ScriptBuilder())
+            {
+                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "registerCandidate", pubKey);
+                script = scriptBuilder.ToArray();
+            }
+
+            return Operations.CreateTransaction(system: system, script: script, wallet: wallet, account: account.ScriptHash, gas: (long)testGas);
         }
 
         [RpcMethod]
         protected virtual JObject UnregisterCandidate(JArray _params)
         {
             string privateKey = _params[0].AsString();
-            KeyPair key = new(OperationWallet.GetPrivateKeyFromWIF(privateKey));
+
+            KeyPair key = Utility.GetKeyPair(privateKey);
 
             OperationAccount account = new OperationAccount(key, system.Settings);
             OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
@@ -58,24 +79,41 @@ namespace Nxa.Plugins
                 script = scriptBuilder.ToArray();
             }
 
-            return Operations.CreateSendTransaction(system, script, wallet, true, account.ScriptHash);
+            return Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, account: account.ScriptHash);
         }
+
+        [RpcMethod]
+        protected virtual JObject CreateUnregisterCandidateTx(JArray _params)
+        {
+            string publicKey = _params[0].AsString();
+
+            ECPoint pubKey = ECPoint.Parse(publicKey, ECCurve.Secp256r1);
+
+            OperationAccount account = new OperationAccount(pubKey, system.Settings);
+            OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
+
+            byte[] script;
+            using (ScriptBuilder scriptBuilder = new ScriptBuilder())
+            {
+                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "unregisterCandidate", pubKey);
+                script = scriptBuilder.ToArray();
+            }
+
+            return Operations.CreateTransaction(system: system, script: script, wallet: wallet, account: account.ScriptHash);
+        }
+
 
         [RpcMethod]
         protected virtual JObject Vote(JArray _params)
         {
             string privateKey = _params[0].AsString();
-            KeyPair key = new(OperationWallet.GetPrivateKeyFromWIF(privateKey));
+            string votePubKey = _params[1].AsString();
+
+            KeyPair key = Utility.GetKeyPair(privateKey);
+            ECPoint pubKey = ECPoint.Parse(votePubKey, ECCurve.Secp256r1);
 
             OperationAccount account = new OperationAccount(key, system.Settings);
             OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
-
-            string votePubKey = _params[1].AsString();
-
-            if (!ECPoint.TryParse(votePubKey, ECCurve.Secp256r1, out ECPoint pubKey))
-            {
-                //error
-            }
 
             byte[] script;
             using (ScriptBuilder scriptBuilder = new ScriptBuilder())
@@ -84,41 +122,37 @@ namespace Nxa.Plugins
                 script = scriptBuilder.ToArray();
             }
 
-            return Operations.CreateSendTransaction(system, script, wallet, true, account.ScriptHash);
+            return Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, account: account.ScriptHash);
         }
 
-        //[RpcMethod]
-        //protected virtual JObject Vote2(JArray _params)
-        //{
-        //    string privateKey = _params[0].AsString();
-        //    KeyPair key = new(OperationWallet.GetPrivateKeyFromWIF(privateKey));
+        [RpcMethod]
+        protected virtual JObject CreateVoteTx(JArray _params)
+        {
+            string publicKey = _params[0].AsString();
+            string voteForPubKeyStr = _params[1].AsString();
 
-        //    OperationAccount account = new OperationAccount(key, system.Settings);
-        //    OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
+            ECPoint pubKey = ECPoint.Parse(publicKey, ECCurve.Secp256r1);
+            ECPoint voteForPubKey = ECPoint.Parse(voteForPubKeyStr, ECCurve.Secp256r1);
 
-        //    string votePubKey = _params[1].AsString();
+            OperationAccount account = new OperationAccount(pubKey, system.Settings);
+            OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
 
-        //    if (!ECPoint.TryParse(votePubKey, ECCurve.Secp256r1, out ECPoint pubKey))
-        //    {
-        //        //error
-        //    }
+            byte[] script;
+            using (ScriptBuilder scriptBuilder = new ScriptBuilder())
+            {
+                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "vote", account.ScriptHash, voteForPubKey);
+                script = scriptBuilder.ToArray();
+            }
 
-        //    byte[] script;
-        //    using (ScriptBuilder scriptBuilder = new ScriptBuilder())
-        //    {
-        //        scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "vote", account.ScriptHash, pubKey);
-        //        script = scriptBuilder.ToArray();
-        //    }
-
-        //    return Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, signAndSend: false, account: account.ScriptHash);
-        //}
-
+            return Operations.CreateTransaction(system: system, script: script, wallet: wallet, account: account.ScriptHash);
+        }
 
         [RpcMethod]
         protected virtual JObject Unvote(JArray _params)
         {
             string privateKey = _params[0].AsString();
-            KeyPair key = new(OperationWallet.GetPrivateKeyFromWIF(privateKey));
+
+            KeyPair key = Utility.GetKeyPair(privateKey);
 
             OperationAccount account = new OperationAccount(key, system.Settings);
             OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
@@ -130,11 +164,29 @@ namespace Nxa.Plugins
                 script = scriptBuilder.ToArray();
             }
 
-            return Operations.CreateSendTransaction(system, script, wallet, true, account.ScriptHash);
-
+            return Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, account: account.ScriptHash);
         }
 
+        [RpcMethod]
+        protected virtual JObject CreateUnvoteTx(JArray _params)
+        {
+            string publicKey = _params[0].AsString();
 
+            ECPoint pubKey = ECPoint.Parse(publicKey, ECCurve.Secp256r1);
+
+            OperationAccount account = new OperationAccount(pubKey, system.Settings);
+            OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
+
+            byte[] script;
+            using (ScriptBuilder scriptBuilder = new ScriptBuilder())
+            {
+                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "vote", account.ScriptHash, null);
+                script = scriptBuilder.ToArray();
+            }
+
+            return Operations.CreateTransaction(system: system, script: script, wallet: wallet, account: account.ScriptHash);
+
+        }
 
 
         [RpcMethod]
@@ -148,28 +200,16 @@ namespace Nxa.Plugins
             arg["value"] = address.ToScriptHash(system.Settings.AddressVersion).ToString();
 
             Operations.OnInvokeWithResult(system, NativeContract.DVITA.Hash, "getAccountState", out StackItem resultStack, null, new JArray(arg));
-            //if (!Operations.OnInvokeWithResult(system, NativeContract.DVITA.Hash, "getAccountState", out StackItem result, null, new JArray(arg))) 
-            //return new JObject();
-            //Console.WriteLine();
-            //if (result.IsNull)
-            //{
-            //    ConsoleHelper.Warning(notice);
-            //    return new JObject();
-            //}
+
             var resJArray = (Neo.VM.Types.Array)resultStack;
             foreach (StackItem value in resJArray)
             {
                 if (value.IsNull)
                 {
-                    //ConsoleHelper.Warning(notice);
-                    //return new JObject();
                     throw new RpcException(-500, notice);
                 }
             }
             var publickey = ECPoint.Parse(((ByteString)resJArray?[2])?.GetSpan().ToHexString(), ECCurve.Secp256r1);
-            //ConsoleHelper.Info("Voted: ", Contract.CreateSignatureRedeemScript(publickey).ToScriptHash().ToAddress(system.Settings.AddressVersion));
-            //ConsoleHelper.Info("Amount: ", new BigDecimal(((Integer)resJArray?[0]).GetInteger(), NativeContract.DVITA.Decimals).ToString());
-            //ConsoleHelper.Info("Block: ", ((Integer)resJArray?[1]).GetInteger().ToString());
 
             JObject result = new JObject();
             result["voted"] = Contract.CreateSignatureRedeemScript(publickey).ToScriptHash().ToAddress(system.Settings.AddressVersion);
@@ -184,24 +224,15 @@ namespace Nxa.Plugins
         {
             Operations.OnInvokeWithResult(system, NativeContract.DVITA.Hash, "getCandidates", out StackItem resultStack, null, null, false);
 
-            //if (!Operations.OnInvokeWithResult(system, NativeContract.DVITA.Hash, "getCandidates", out StackItem result, null, null, false)) return new JObject();
-
             var resJArray = (Neo.VM.Types.Array)resultStack;
-
 
             List<JString> candidates = new List<JString>();
             if (resJArray.Count > 0)
             {
-                //Console.WriteLine();
-                //ConsoleHelper.Info("Candidates:");
-
                 foreach (var item in resJArray)
                 {
                     var value = (Neo.VM.Types.Array)item;
-
                     candidates.Add((JString)(((ByteString)value?[0])?.GetSpan().ToHexString() + " : " + ((Integer)value?[1]).GetInteger()));
-                    //Console.Write(((ByteString)value?[0])?.GetSpan().ToHexString() + "\t");
-                    //Console.WriteLine(((Integer)value?[1]).GetInteger());
                 }
             }
             JObject result = new JObject();
