@@ -32,21 +32,24 @@ namespace Nxa.Plugins
 
         protected override void OnSystemLoaded(NeoSystem system)
         {
-            RpcServerSettings s = settings.Servers.FirstOrDefault(p => p.Network == system.Settings.Network);
-            if (s is null) return;
-
-            NXAExtendedRpc server = new(system, s);
-
-            if (handlers.Remove(s.Network, out var list))
+            if (settings.Active)
             {
-                foreach (var handler in list)
-                {
-                    server.RegisterMethods(handler);
-                }
-            }
+                RpcServerSettings s = settings.Servers.FirstOrDefault(p => p.Network == system.Settings.Network);
+                if (s is null) return;
 
-            server.StartRpcServer();
-            servers.TryAdd(s.Network, server);
+                NXAExtendedRpc server = new(system, s);
+
+                if (handlers.Remove(s.Network, out var list))
+                {
+                    foreach (var handler in list)
+                    {
+                        server.RegisterMethods(handler);
+                    }
+                }
+
+                server.StartRpcServer();
+                servers.TryAdd(s.Network, server);
+            }
         }
 
         public static void RegisterMethods(object handler, uint network)

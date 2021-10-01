@@ -14,8 +14,10 @@ namespace Nxa.Plugins
     {
         public IReadOnlyList<RpcServerSettings> Servers { get; }
 
+        public bool Active { get; }
         public Settings(IConfigurationSection section)
         {
+            Active = section.GetValue("Active", false);
             Servers = section.GetSection(nameof(Servers)).GetChildren().Select(p => RpcServerSettings.Load(p)).ToArray();
         }
     }
