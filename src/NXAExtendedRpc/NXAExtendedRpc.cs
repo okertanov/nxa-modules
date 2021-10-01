@@ -1,7 +1,5 @@
-﻿using Akka.Actor;
-using Neo;
+﻿using Neo;
 using Neo.IO.Json;
-using Neo.Network.P2P;
 using Neo.Plugins;
 using System;
 using System.Collections.Generic;
@@ -11,15 +9,28 @@ using System.Threading.Tasks;
 
 namespace Nxa.Plugins
 {
-    public partial class NXAExtendedRpc : RpcServer
+    public partial class NXAExtendedRpc : Plugin
     {
-        private readonly NeoSystem system;
+        public override string Name => "ExtenedRpcServer";
+        public override string Description => "Enables Extened RPC for the node";
 
-        public NXAExtendedRpc(NeoSystem system, RpcServerSettings settings) : base(system, settings)
+        private NeoSystem system;
+        private Settings settings;
+
+
+        protected override void Configure()
         {
-            this.system = system;
+            settings = new Settings(GetConfiguration());
         }
 
+        protected override void OnSystemLoaded(NeoSystem system)
+        {
+            if (settings.Active)
+            {
+                this.system = system;
+                RpcServerPlugin.RegisterMethods(this, settings.Network);
+            }
+        }
 
         [RpcMethod]
         protected virtual JObject HealthCheck(JArray _params)
@@ -28,5 +39,6 @@ namespace Nxa.Plugins
             result["success"] = true;
             return result;
         }
+
     }
 }

@@ -12,13 +12,12 @@ namespace Nxa.Plugins
 {
     internal sealed class Settings
     {
-        public IReadOnlyList<RpcServerSettings> Servers { get; }
-
         public bool Active { get; }
+        public uint Network { get; }
         public Settings(IConfigurationSection section)
         {
             Active = section.GetValue("Active", false);
-            Servers = section.GetSection(nameof(Servers)).GetChildren().Select(p => RpcServerSettings.Load(p)).ToArray();
+            Network = uint.Parse(section.GetValue("Network", "5195086"));
         }
     }
 

@@ -1,6 +1,7 @@
 {
   "PluginConfiguration": {
     "Active": true,
+    "Network": 199,
     "Servers": [
       {
         "Network": 199,
