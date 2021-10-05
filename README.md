@@ -459,6 +459,8 @@ RelayTx
 Relay signed transaction. Alternative to SendRawTransaction method.
 Param: Transaction json object as string. 
 
+Fixing bug. Not working correctly right now.
+
 Request body:
 
     {
