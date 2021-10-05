@@ -456,7 +456,7 @@ Response body:
     }
 RelayTx
 ---
-Relay signed transaction.  
+Relay signed transaction. Alternative to SendRawTransaction method.
 Param: Transaction json object as string. 
 
 Request body:
