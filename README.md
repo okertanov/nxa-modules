@@ -361,9 +361,10 @@ Response body:
     {
         "jsonrpc": "2.0",
         "id": 1,
-        "error": {
-            "code": -500,
-            "message": "No vote record!"
+        "result": {
+            "voted": "NVANzkHFQ55TDiEFmLDWrZzC3suPC1BSYt",
+            "amount": "50",
+            "block": "166264"
         }
     }
 GetFundation
