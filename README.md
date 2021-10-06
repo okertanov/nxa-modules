@@ -29,8 +29,8 @@ Response body:
 GetBalance
 ---
 Get token balance
-First param: Address for witch to get token balance.
-Second param: Token. Pass token hash. Alternative pass strings "DVITA" or "GAS".
+First param: Address for witch to get token balance.  
+Second param: Token. Pass token hash. Alternative pass strings "DVITA" or "GAS".  
 
 Request body:
 
@@ -78,7 +78,7 @@ Response body:
     }
 GetCandidates
 ---
-Return list of candidates
+Return list of candidates  
 
 Request body:
 
@@ -104,8 +104,8 @@ Response body:
     }
 RegisterCandidate
 ---
-Create sign and relay transaction for registering new candidate for given private key.
-Pass private key.
+Create sign and relay transaction for registering new candidate for given private key.  
+Pass private key.  
 
 Request body:
 
@@ -124,8 +124,8 @@ Response body:
     }
 CreateRegisterCandidateTx
 ---
-Create tranasction for registering new candidate.
-Pass public key.
+Create tranasction for registering new candidate.  
+Pass public key.  
 
 Request body:
 
@@ -164,8 +164,8 @@ Response body:
     }
 UnregisterCandidate
 ---
-Create sign and relay transaction for unregistering new candidate.
-Pass private key.
+Create sign and relay transaction for unregistering new candidate.  
+Pass private key.  
 
 Request body:
 
@@ -184,8 +184,8 @@ Response body:
     }
 CreateUnregisterCandidateTx
 ---
-Create tranasction for unregistering candidate. 
-Pass public key. 
+Create tranasction for unregistering candidate.  
+Pass public key.  
 
 Request body:
 
@@ -224,9 +224,9 @@ Response body:
     }
 Vote
 ---
-Create sign and relay transaction for voting.
-First param:  Vote from private key.
-Second param: Vote for public key.
+Create sign and relay transaction for voting.  
+First param:  Vote from private key.  
+Second param: Vote for public key.  
 
 Request body:
 
@@ -398,10 +398,10 @@ Response body:
 
 SignTx
 ---
-Signs tranasction then returns signed transaction and context.
+Signs tranasction then returns signed transaction and context. 
 
-First param: Privte key to sign transaction with.
-Second param: Transaction json object as string or as base64 string.
+First param: Privte key to sign transaction with. 
+Second param: Transaction json object as string or as base64 string. 
 
 Request body:
 
@@ -464,8 +464,9 @@ Response body:
     }
 RelayTx
 ---
-Relay signed transaction. Alternative to SendRawTransaction method.
-Param: Transaction json object as string or as base64 string.
+Relay signed transaction. Alternative to SendRawTransaction method. 
+
+Param: Transaction json object as string or as base64 string. 
 
 Request body:
 
