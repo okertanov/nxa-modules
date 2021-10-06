@@ -38,6 +38,11 @@ namespace Nxa.Plugins
         protected virtual JObject RelayTx(JArray _params)
         {
             string transactionString = _params[0].AsString();
+
+            if (transactionString.IsBase64String())
+            {
+                transactionString = Encoding.UTF8.GetString(Convert.FromBase64String(transactionString));
+            }
             JObject transactionJson = JObject.Parse(transactionString);
             Transaction tx = Utility.TransactionFromJson(transactionJson, system.Settings);
 
