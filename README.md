@@ -102,7 +102,7 @@ Response body:
     }
 RegisterCandidate
 ---
-Create sign and relay transaction for registering new candidate.
+Create sign and relay transaction for registering new candidate for given private key.
 Pass private key.
 
 Request body:
