@@ -243,9 +243,9 @@ Response body:
     }
 CreateVoteTx
 ---
-Create tranasction for voting. 
-First param:  Vote from public key. 
-Second param: Vote for public key. 
+Create tranasction for voting.  
+First param:  Vote from public key.  
+Second param: Vote for public key.  
 
 Request body:
 
@@ -286,7 +286,6 @@ Unvote
 ---
 Create sign and relay transaction for unvoting. 
 First param:  Unvote from private key. 
-Second param: unvote for public key. 
 
 Request body:
 
@@ -306,9 +305,8 @@ Response body:
 
 CreateUnvoteTx
 ---
-Create tranasction for voting. 
-First param:  Vote from public key. 
-Second param: Vote for public key. 
+Create tranasction for unvoting.  
+First param:  Unvote from public key.  
 
 Request body:
 
@@ -323,25 +321,26 @@ Response body:
     {
         "jsonrpc": "2.0",
         "id": 1,
-        "result": {
-        "tx": {
-            "hash": "0x163b8f1b34c03bbc66dbab56628ad0df6474d0e28be9e3b0413772ae12268b5e",
-            "size": 109,
-            "version": 0,
-            "nonce": 1098350121,
-            "sender": "NVANzkHFQ55TDiEFmLDWrZzC3suPC1BSYt",
-            "sysfee": "3011400",
-            "netfee": "1200520",
-            "validuntilblock": 166047,
-            "signers": [
-                {
-                    "account": "0x40a33185d9c4d19c3097eea4b72d4cd1cdd47265",
-                    "scopes": "CalledByEntry"
-                }
-            ],
-            "attributes": [],
-            "script": "CwwUZXLUzdFMLbek7pcwnNHE2YUxo0ASwB8MBHZvdGUMFF+eAxvCjkcR3zGCkTqVHjklEE6zQWJ9W1I=",
-            "witnesses": []
+        "result": 
+        {
+            "tx": {
+                "hash": "0xaa513b8667c71530dbaf2f1865b14e9008a19e04984d5824120f5096e0fdb640",
+                "size": 109,
+                "version": 0,
+                "nonce": 213359459,
+                "sender": "NVANzkHFQ55TDiEFmLDWrZzC3suPC1BSYt",
+                "sysfee": "3011400",
+                "netfee": "1200520",
+                "validuntilblock": 172181,
+                "signers": [
+                    {
+                        "account": "0x40a33185d9c4d19c3097eea4b72d4cd1cdd47265",
+                        "scopes": "CalledByEntry"
+                    }
+                ],
+                "attributes": [],
+                "script": "CwwUZXLUzdFMLbek7pcwnNHE2YUxo0ASwB8MBHZvdGUMFF+eAxvCjkcR3zGCkTqVHjklEE6zQWJ9W1I=",
+                "witnesses": []
             }
         }
     }
