@@ -1,6 +1,7 @@
 ﻿using Neo;
 using Neo.ConsoleService;
 using Neo.Cryptography.ECC;
+using Neo.IO;
 using Neo.IO.Json;
 using Neo.Network.P2P.Payloads;
 using Neo.SmartContract;
@@ -12,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Nxa.Plugins
@@ -84,6 +86,7 @@ namespace Nxa.Plugins
         {
             JObject json = new JObject();
             json["tx"] = TransactionToJson(tx, protocolSettings);
+            json["base64txjson"] = JsonToBase64(json["tx"]);
             if (context != null)
                 json["context"] = context.ToJson();
             return json;
@@ -98,6 +101,11 @@ namespace Nxa.Plugins
             json["sysfee"] = tx.SystemFee.ToString();
             json["netfee"] = tx.NetworkFee.ToString();
             return json;
+        }
+
+        public static JString JsonToBase64(JObject tx)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(tx.AsString()));
         }
 
         public static Transaction TransactionFromJson(JObject json, ProtocolSettings protocolSettings)
@@ -160,6 +168,12 @@ namespace Nxa.Plugins
                 addressOrScriptHash.ToScriptHash(protocolSettings.AddressVersion) : UInt160.Parse(addressOrScriptHash);
         }
 
+        public static bool IsBase64String(this string s)
+        {
+            s = s.Trim();
+            return (s.Length % 4 == 0) && Regex.IsMatch(s, @"^[a-zA-Z0-9\+/]*={0,3}$", RegexOptions.None);
+
+        }
 
     }
 }

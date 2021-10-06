@@ -1,8 +1,11 @@
-﻿using Neo.IO.Json;
+﻿using Neo.IO;
+using Neo.IO.Json;
 using Neo.Network.P2P.Payloads;
 using Neo.Plugins;
 using Neo.Wallets;
 using Nxa.Plugins.HelperObjects;
+using System;
+using System.Text;
 
 namespace Nxa.Plugins
 {
@@ -16,6 +19,11 @@ namespace Nxa.Plugins
             string transactionString = _params[1].AsString();
 
             KeyPair key = Utility.GetKeyPair(privateKey);
+
+            if (transactionString.IsBase64String())
+            {
+                transactionString = Encoding.UTF8.GetString(Convert.FromBase64String(transactionString));
+            }
             JObject transactionJson = JObject.Parse(transactionString);
             Transaction tx = Utility.TransactionFromJson(transactionJson, system.Settings);
 
