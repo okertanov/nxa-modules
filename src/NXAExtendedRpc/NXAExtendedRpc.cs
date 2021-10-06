@@ -1,11 +1,6 @@
 ﻿using Neo;
 using Neo.IO.Json;
 using Neo.Plugins;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Nxa.Plugins
 {

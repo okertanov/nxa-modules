@@ -226,17 +226,21 @@ namespace Nxa.Plugins
 
             var resJArray = (Neo.VM.Types.Array)resultStack;
 
-            List<JString> candidates = new List<JString>();
+            JArray candidates = new JArray();
             if (resJArray.Count > 0)
             {
                 foreach (var item in resJArray)
                 {
                     var value = (Neo.VM.Types.Array)item;
-                    candidates.Add((JString)(((ByteString)value?[0])?.GetSpan().ToHexString() + " : " + ((Integer)value?[1]).GetInteger()));
+                    JObject candidate = new JObject();
+                    candidate["DVITA"] = ((Integer)value?[1]).GetInteger().ToString();
+                    candidate["PubKey"] = (((ByteString)value?[0])?.GetSpan().ToHexString()).ToString();
+                    candidates.Add(candidate);
+
                 }
             }
             JObject result = new JObject();
-            result["candidates"] = candidates.ToArray();
+            result["candidates"] = candidates;
             return result;
         }
 

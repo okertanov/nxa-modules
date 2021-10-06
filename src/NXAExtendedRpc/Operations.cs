@@ -110,6 +110,12 @@ namespace Nxa.Plugins
             try
             {
                 context = new ContractParametersContext(snapshot, tx, system.Settings.Network);
+
+                //if (tx.Witnesses != null && tx.Witnesses.Length > 0)
+                //{
+                // missing contextItem => myby can create and add 
+                //    //context.AddSignature(context,tx.Witnesses[0], tx.Signers)
+                //}
             }
             catch (InvalidOperationException e)
             {
@@ -124,7 +130,7 @@ namespace Nxa.Plugins
 
             if (send)
             {
-                //for now 
+                //for now missing context item in contract
                 if (wallet == null)
                 {
                     system.Blockchain.Tell(tx);
