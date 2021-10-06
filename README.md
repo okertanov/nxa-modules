@@ -371,7 +371,7 @@ Response body:
     }
 GetFundation
 ---
-Get fundation. 
+Get fundation returns settings validators. (Publick keys)
 
 Request body:
 
