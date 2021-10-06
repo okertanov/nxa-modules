@@ -398,9 +398,10 @@ Response body:
 
 SignTx
 ---
-Returns true if exdended rpc is running. 
+Signs tranasction then returns signed transaction and context.
+
 First param: Privte key to sign transaction with.
-Second param: Transaction json object as string.
+Second param: Transaction json object as string or as base64 string.
 
 Request body:
 
