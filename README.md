@@ -92,7 +92,12 @@ Response body:
         "jsonrpc": "2.0",
         "id": 1,
         "result": {
-            "candidates": []
+            "candidates": [
+                {
+                    "DVITA": "50",
+                    "PubKey": "035997eaa3682cab4a2f701a9085ab891ad97e852b2ba30bdb5713fe62856664d7"
+                }
+            ]
         }
     }
 RegisterCandidate
@@ -458,8 +463,6 @@ RelayTx
 ---
 Relay signed transaction. Alternative to SendRawTransaction method.
 Param: Transaction json object as string. 
-
-Fixing bug. Not working correctly right now.
 
 Request body:
 
