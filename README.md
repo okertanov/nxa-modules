@@ -29,6 +29,8 @@ Response body:
 GetBalance
 ---
 Get token balance
+First param: Address for witch to get token balance.
+Second param: Token. Pass token hash. Alternative pass strings "DVITA" or "GAS".
 
 Request body:
 
