@@ -277,8 +277,13 @@ namespace Nxa.Plugins
             }
         }
 
-
-
-
+        public static JObject DeploySmartContract(NeoSystem system, OperationWallet wallet, byte[] nefImage, JObject manifest) {
+            var res = new JObject();
+            res["scriptHash"] = "0x00";
+            res["address"] = "0x0000000000";
+            res["txHash"] = "0x00000000001";
+            res["block"] = "1";
+            return res;
+        }
     }
 }

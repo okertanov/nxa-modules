@@ -459,7 +459,7 @@ Response body:
         }
     }
 RelayTx
----
+-------
 Relay signed transaction. Alternative to SendRawTransaction method. 
 
 Param: Transaction json object as string or as base64 string. 
@@ -479,3 +479,6 @@ Response body:
         "id": 1,
         "result": "0xcd30640cd12603e589d2132c32aa7675e57a72cd25c1d89ed85310291f7cfd43"
     }
+
+Deploy Contract
+---------------
