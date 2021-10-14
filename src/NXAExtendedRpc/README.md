@@ -482,3 +482,10 @@ Response body:
 
 Deploy Contract
 ---------------
+    
+    deploycontract(wif, nef_image, manifest)
+
+    var res = new JObject();
+    res["scriptHash"] = $"{scriptHash}";
+    res["address"] = scriptHash.ToAddress(system.Settings.AddressVersion);
+    res["sent"] = sent;

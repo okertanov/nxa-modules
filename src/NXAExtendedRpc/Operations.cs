@@ -1,21 +1,23 @@
-﻿using Akka.Actor;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+using Akka.Actor;
 using Neo;
-using Neo.Cryptography;
-using Neo.Cryptography.ECC;
 using Neo.IO;
 using Neo.IO.Json;
+using Neo.Cryptography;
+using Neo.Cryptography.ECC;
 using Neo.Network.P2P.Payloads;
 using Neo.Persistence;
 using Neo.Plugins;
 using Neo.SmartContract;
 using Neo.SmartContract.Native;
+using Neo.SmartContract.Manifest;
 using Neo.VM;
 using Neo.VM.Types;
 using Neo.Wallets;
 using Nxa.Plugins.HelperObjects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Nxa.Plugins
 {
@@ -277,12 +279,39 @@ namespace Nxa.Plugins
             }
         }
 
-        public static JObject DeploySmartContract(NeoSystem system, OperationWallet wallet, byte[] nefImage, JObject manifest) {
+        public static JObject DeploySmartContract(NeoSystem system, OperationWallet wallet, KeyPair keyPair, byte[] nefImage, ContractManifest manifest) {
+            Console.WriteLine($"Deploying Smart Contract: '${manifest.Name}'");
+
+            // ---
+            MemoryStream stream = new MemoryStream(nefImage);
+            BinaryReader reader = new BinaryReader(stream);
+            NefFile nefFile = new NefFile();
+            nefFile.Deserialize(reader);
+
+            byte[] script;
+            using (ScriptBuilder sb = new ScriptBuilder())
+            {
+                sb.EmitDynamicCall(NativeContract.ContractManagement.Hash, "deploy", nefFile, manifest.ToJson().ToString());
+                script = sb.ToArray();
+            }
+            UInt160 sender = Contract.CreateSignatureRedeemScript(keyPair.PublicKey).ToScriptHash();
+            Signer[] signers = new[] { new Signer { Scopes = WitnessScope.CalledByEntry, Account = sender } };
+
+            var snapshot = system.StoreView;
+            var tx = wallet.MakeTransaction(snapshot, script, sender, signers, maxGas: TestModeGas);
+           
+            UInt160 scriptHash = Neo.SmartContract.Helper.GetContractHash(tx.Sender, nefFile.CheckSum, manifest.Name);
+
+            var sent = SignAndSendTx(system, snapshot, tx, wallet, true);
+            // ---
+
             var res = new JObject();
-            res["scriptHash"] = "0x00";
-            res["address"] = "0x0000000000";
-            res["txHash"] = "0x00000000001";
-            res["block"] = "1";
+            res["scriptHash"] = $"{scriptHash}";
+            res["address"] = scriptHash.ToAddress(system.Settings.AddressVersion);
+            res["sent"] = sent;
+
+            Console.WriteLine($"Deployed Smart Contract '${scriptHash}'.");
+
             return res;
         }
     }

@@ -1,11 +1,13 @@
-﻿using Neo.IO;
+﻿using System;
+using System.Threading.Tasks;
+using System.Text;
+using Neo.IO;
 using Neo.IO.Json;
-using Neo.Network.P2P.Payloads;
 using Neo.Plugins;
 using Neo.Wallets;
+using Neo.SmartContract.Manifest;
+using Neo.Network.P2P.Payloads;
 using Nxa.Plugins.HelperObjects;
-using System;
-using System.Text;
 
 namespace Nxa.Plugins {
     public partial class NXAExtendedRpc {
@@ -27,8 +29,9 @@ namespace Nxa.Plugins {
             }
 
             var manifestJson = JObject.Parse(manifestStr);
+            var manifest = ContractManifest.FromJson(manifestJson);
 
-            return Operations.DeploySmartContract(system: system, wallet: wallet, nefImage: nefImage, manifest: manifestJson);
+            return Operations.DeploySmartContract(system: system, wallet: wallet, keyPair: keyPair, nefImage: nefImage, manifest: manifest);
         }
     }
 }
