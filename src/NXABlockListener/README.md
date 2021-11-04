@@ -307,8 +307,9 @@ CreateTask
 Create new task. Returns created task.  
 Parameters:
 TaskType: Search or Blocklistener. 
-* Blocklistener - is default running task and should not be created without reason. Blocklistener task doesnt require extra parameters and will ignore TaskParameters field. You can specify ActiveBlock.
-* Search - Search task has end conditions and you can specify what exactly you need to find. Return Id guid will be RMQ queue name where results will be announced.
+* Blocklistener - is default running task and should not be created without reason. Blocklistener task doesnt require extra parameters and will ignore TaskParameters field. You can specify ActiveBlock.  
+* Search - Search task has end conditions and you can specify what exactly you need to find. Return Id guid will be RMQ queue name where results will be announced.  
+
 ActiveBlock: Block on witch task is right now.  
 TaskParameters: Specify Search task search conditions and end conditions.  
 * FromBlock - block where to start search task
