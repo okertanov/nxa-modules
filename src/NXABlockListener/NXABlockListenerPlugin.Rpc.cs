@@ -208,6 +208,7 @@ namespace Nxa.Plugins
 
             if (taskManager.CreateTask(taskObject))
             {
+                taskObject.TaskState = TaskState.Active;    //so we dont return state None
                 result["success"] = true;
                 result["message"] = taskObject.ToJson();
             }
