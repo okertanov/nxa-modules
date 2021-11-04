@@ -279,8 +279,20 @@ namespace Nxa.Plugins
             }
         }
 
-        public static JObject DeploySmartContract(NeoSystem system, OperationWallet wallet, KeyPair keyPair, byte[] nefImage, ContractManifest manifest) {
-            try {
+
+        /// <summary>
+        /// Process "invoke" command
+        /// </summary>
+        /// <param name="system">NeoSystem</param>
+        /// <param name="wallet">wallet</param>
+        /// <param name="keyPair">key pair </param>
+        /// <param name="nefImage">nef image</param>
+        /// <param name="manifest">manifest</param>
+        /// <returns>Return jobject with SC script hash</returns>
+        public static JObject DeploySmartContract(NeoSystem system, OperationWallet wallet, KeyPair keyPair, byte[] nefImage, ContractManifest manifest)
+        {
+            try
+            {
                 MemoryStream stream = new MemoryStream(nefImage);
                 BinaryReader reader = new BinaryReader(stream);
                 NefFile nefFile = new NefFile();
@@ -299,7 +311,7 @@ namespace Nxa.Plugins
 
                 var snapshot = system.StoreView;
                 var tx = wallet.MakeTransaction(snapshot, script, sender, signers, maxGas: TestModeGas);
-            
+
                 UInt160 scriptHash = Neo.SmartContract.Helper.GetContractHash(tx.Sender, nefFile.CheckSum, manifest.Name);
 
                 var sent = SignAndSendTx(system, snapshot, tx, wallet, true);
@@ -312,8 +324,57 @@ namespace Nxa.Plugins
                 Console.WriteLine($"Deployed Smart Contract '{scriptHash}'.");
 
                 return res;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Console.Error.WriteLine($"Deployed Smart Contract Error: {e.Message} : {e.ToString()}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Process "invoke" command
+        /// </summary>
+        /// <param name="system">NeoSystem</param>
+        /// <param name="wallet">wallet</param>
+        /// <param name="account">public key </param>
+        /// <param name="nefImage">nef image</param>
+        /// <param name="manifest">manifest</param>
+        /// <returns>Return jobject with SC script hash</returns>
+        public static JObject CreateDeploySmartContractTransaction(NeoSystem system, OperationWallet wallet, UInt160 account, byte[] nefImage, ContractManifest manifest
+            , long gas = TestModeGas)
+        {
+            try
+            {
+                MemoryStream stream = new MemoryStream(nefImage);
+                BinaryReader reader = new BinaryReader(stream);
+                NefFile nefFile = new NefFile();
+                nefFile.Deserialize(reader);
+
+                byte[] script;
+                using (ScriptBuilder sb = new ScriptBuilder())
+                {
+                    sb.EmitDynamicCall(NativeContract.ContractManagement.Hash, "deploy", nefFile.ToArray(), manifest.ToJson().ToString());
+                    script = sb.ToArray();
+                }
+
+                Signer[] signers = System.Array.Empty<Signer>();
+                var snapshot = system.StoreView;
+                if (account != null)
+                {
+                    signers = wallet.GetAccounts()
+                    .Where(p => !p.Lock && !p.WatchOnly && p.ScriptHash == account && NativeContract.GAS.BalanceOf(snapshot, p.ScriptHash).Sign > 0)
+                    .Select(p => new Signer() { Account = p.ScriptHash, Scopes = WitnessScope.CalledByEntry })
+                    .ToArray();
+                }
+                Transaction tx = wallet.MakeTransaction(snapshot, script, account, signers, maxGas: gas);
+
+                return Utility.TransactionAndContextToJson(tx, system.Settings);
+
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"Create Deploy Smart Contract transaction Error: {e.Message} : {e.ToString()}");
                 throw;
             }
         }
