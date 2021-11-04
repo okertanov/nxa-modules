@@ -72,9 +72,9 @@ Path:           persistence location (leveldb)
 Console
 -------
 
-start blocklistener:    starts blocklistener            (If there is no active task with type=blocklistener creates one and starts it)
-stop blocklistener:     stops blocklistener 
-show blocklistener:     show blocklistener console output
+start blocklistener:    starts blocklistener            (If there is no active task with type=blocklistener creates one and starts it)  
+stop blocklistener:     stops blocklistener   
+show blocklistener:     show blocklistener console output   
 
 RPC
 ---
@@ -105,7 +105,7 @@ Response body:
     }
 StartBlockListener
 ---
-Returns true if block listener started or allready running.
+Returns true if block listener started or allready running.  
 (If there is no active task with type=blocklistener creates one and starts it)
 
 Request body:
@@ -150,10 +150,10 @@ Response body:
     }
 GetTaskList
 ---
-Returns list of blocklistener tasks.
-Possible parameters taskstate and tasktype. If no parameter provided returns all tasks.
-taskstate: None, Active, Finished, Canceled, Error
-tasktype: BlockListener, Search
+Returns list of blocklistener tasks.  
+Possible parameters taskstate and tasktype. If no parameter provided returns all tasks.  
+taskstate: None, Active, Finished, Canceled, Error  
+tasktype: BlockListener, Search  
 
 Request body:
 
@@ -304,23 +304,23 @@ Response body:
     }
 CreateTask
 ---
-Create new task. Returns created task.
+Create new task. Returns created task.  
 Parameters:
 TaskType: Search or Blocklistener. 
 * Blocklistener - is default running task and should not be created without reason. Blocklistener task doesnt require extra parameters and will ignore TaskParameters field. You can specify ActiveBlock.
 * Search - Search task has end conditions and you can specify what exactly you need to find. Return Id guid will be RMQ queue name where results will be announced.
-ActiveBlock: Block on witch task is right now.
-TaskParameters: Specify Search task search conditions and end conditions.
-*FromBlock - block where to start search task
-*ToBlock - block when serach task will end. (If larger than current chain index will run till chain reaches configured end block)
-*SearchJSON - specify what to announce to RMQ.
+ActiveBlock: Block on witch task is right now.  
+TaskParameters: Specify Search task search conditions and end conditions.  
+* FromBlock - block where to start search task
+* ToBlock - block when serach task will end. (If larger than current chain index will run till chain reaches configured end block)
+* SearchJSON - specify what to announce to RMQ.
 
-Example1:
-"SearchJSON":{"block":{"hash": "0xf34593eb02437a099cf7f703e23dcf6f585534caa8d1769b6df250abb2f6d718"},"transaction":{},"transfer":{},"scdeployment":{}}
+Example1:  
+"SearchJSON":{"block":{"hash": "0xf34593eb02437a099cf7f703e23dcf6f585534caa8d1769b6df250abb2f6d718"},"transaction":{},"transfer":{},"scdeployment":{}}  
 This expects to announce blocks with specified hash (Witch will be one block) and all transactions, all transfers and all scdeployments.
 
-Example2:
-"SearchJSON":{ "transfer":{},"scdeployment":{"name": "Team11Token"}}
+Example2:  
+"SearchJSON":{ "transfer":{},"scdeployment":{"name": "Team11Token"}}  
 This expects to announce all transfers and scdeployments where name property is "Team11Token".
 
 !!! For search task return Id will be RMQ queue name where results will be announced !!!
