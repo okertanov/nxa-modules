@@ -54,8 +54,7 @@ namespace Nxa.Plugins
                     if (left != 0) { left = 0; }
 
                     Console.SetCursorPosition(0, 0);
-                    WriteLineWithoutFlicker($"NXABlockListener state: {BlockListenerState}", Console.WindowWidth - 1);
-                    WriteLineWithoutFlicker($"RMQ block: {RmqBlockIndex}  RMQ connection: {RmqConnection}", Console.WindowWidth - 1);
+                    WriteLineWithoutFlicker($"NXABlockListener console (Active: {BlockListenerState})", Console.WindowWidth - 1);
                     WriteLineWithoutFlicker($"", Console.WindowWidth - 1);
 
                     Console.SetCursorPosition(left: left, top: top);
