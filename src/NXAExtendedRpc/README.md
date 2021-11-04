@@ -480,12 +480,73 @@ Response body:
         "result": "0xcd30640cd12603e589d2132c32aa7675e57a72cd25c1d89ed85310291f7cfd43"
     }
 
-Deploy Contract
----------------
-    
-    deploycontract(wif, nef_image, manifest)
+DeployContract
+---
+Deploy smart contract. 
+First param:  Private key to sign deploy contract transaction.
+Second param: nef_image as base64 string
+Third param: manifest as base64 string or json string. 
 
-    var res = new JObject();
-    res["scriptHash"] = $"{scriptHash}";
-    res["address"] = scriptHash.ToAddress(system.Settings.AddressVersion);
-    res["sent"] = sent;
+Request body:
+
+    {
+        "jsonrpc": "2.0",
+        "method": "createdeploycontract",
+        "params": ["035997eaa3682cab4a2f701a9085ab891ad97e852b2ba30bdb5713fe62856664d7","TkVGM05l...","{\"name\":\"Team..."],
+        "id": 1
+    }
+Response body:
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "scriptHash":"0x40a33185d9c4d19c3097eea4b72d4cd1cdd47265",
+            "address":"NVANzkHFQ55TDiEFmLDWrZzC3suPC1BSYt",
+            "sent":true
+        } 
+    }
+
+CreateDeployContract
+---
+Create tranasction for deplying smart contract.  
+First param:  Public key to create transaction singers.
+Second param: nef_image as base64 string
+Third param: manifest as base64 string or json string. 
+
+Request body:
+
+    {
+        "jsonrpc": "2.0",
+        "method": "createdeploycontract",
+        "params": ["035997eaa3682cab4a2f701a9085ab891ad97e852b2ba30bdb5713fe62856664d7","TkVGM05l...","{\"name\":\"Team..."],
+        "id": 1
+    }
+Response body:
+
+   {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "tx": {
+                "hash": "0x24e132642d32d87758aadfa1b76a005bdb3cf425c0ce16535fee121bc2a5c547",
+                "size": 3532,
+                "version": 0,
+                "nonce": 1204185569,
+                "sender": "NVANzkHFQ55TDiEFmLDWrZzC3suPC1BSYt",
+                "sysfee": "1005351030",
+                "netfee": "4623520",
+                "validuntilblock": 326134,
+                "signers": [
+                    {
+                        "account": "0x40a33185d9c4d19c3097eea4b72d4cd1cdd47265",
+                        "scopes": "CalledByEntry"
+                    }
+                ],
+                "attributes": [],
+                "script": "DewHeyJuYW1lIj...",
+                "witnesses": []
+            },
+            "base64txjson": "eyJoYXNoIjoiMHgy..."
+        }
+    }
