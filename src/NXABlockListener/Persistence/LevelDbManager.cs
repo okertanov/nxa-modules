@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace Nxa.Plugins.Db
+namespace Nxa.Plugins.Persistence
 {
     public class LevelDbManager : IDisposable
     {
@@ -38,7 +38,7 @@ namespace Nxa.Plugins.Db
         {
             db?.Dispose();
             db = null;
-            GC.SuppressFinalize(this);
+            //GC.SuppressFinalize(this);
         }
 
     }

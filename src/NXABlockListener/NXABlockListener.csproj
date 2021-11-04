@@ -9,11 +9,13 @@
   <ItemGroup>
     <PackageReference Include="RabbitMQ.Client" Version="6.2.2" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
+    <PackageReference Include="System.Collections.Concurrent" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\neo-modules\src\LevelDBStore\LevelDBStore.csproj" />
     <ProjectReference Include="..\..\..\neo-node\Neo.ConsoleService\Neo.ConsoleService.csproj" />
+	<ProjectReference Include="..\..\..\neo-modules\src\RpcServer\RpcServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,10 +30,7 @@
     <CreateItem Include="$(OutDir)**\*.*">
       <Output TaskParameter="Include" ItemName="PluginToCopy" />
     </CreateItem>
-    <Copy
-    SourceFiles="@(PluginToCopy)"
-    DestinationFolder="..\..\..\neo-node\neo-cli\bin\LocalWindows_Debug\net5.0\Plugins\%(RecursiveDir)"
-    SkipUnchangedFiles="false" />
+    <Copy SourceFiles="@(PluginToCopy)" DestinationFolder="..\..\..\neo-node\neo-cli\bin\LocalWindows_Debug\net5.0\Plugins\%(RecursiveDir)" SkipUnchangedFiles="false" />
   </Target>
 
 </Project>

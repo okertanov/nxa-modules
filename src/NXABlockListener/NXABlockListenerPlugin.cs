@@ -3,30 +3,30 @@ using Neo.ConsoleService;
 using Neo.Network.P2P.Payloads;
 using Neo.Persistence;
 using Neo.Plugins;
+using Nxa.Plugins.Persistence;
+using Nxa.Plugins.Tasks;
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Nxa.Plugins
 {
-    public class NXABlockListenerPlugin : Plugin, IPersistencePlugin
+    public partial class NXABlockListenerPlugin : Plugin, IPersistencePlugin
     {
 
         public override string Name => "NXABlockListener";
         public override string Description => "NXABlockListener informs abount new blocks";
 
-        private BlockListenerManager blockListenerManager;
-
+        private TaskManager taskManager;
         protected override void Configure()
         {
             try
             {
                 Settings.Load(GetConfiguration());
-                if (!Settings.Default.Active)
+                if (!Settings.Default.TurnedOn)
                 {
                     Console.Error.WriteLine("NXABlockListener turned off. Check config file.");
                     return;
                 }
+                StorageManager.Load();
                 Console.WriteLine($"Load plugin NXABlockListener configuration; Network: {Settings.Default.Network};");
             }
             catch (Exception e)
@@ -38,37 +38,42 @@ namespace Nxa.Plugins
 
         protected override void OnSystemLoaded(NeoSystem system)
         {
-            if (!Settings.Default.Active) return;
+            Settings.Default.ProtocolSettings = system.Settings;
+
+            if (!Settings.Default.TurnedOn) return;
             if (system.Settings.Network != Settings.Default.Network) return;
+
+            RpcServerPlugin.RegisterMethods(this, system.Settings.Network);
 
             try
             {
-                blockListenerManager = new BlockListenerManager(system);
+                taskManager = new TaskManager(system);
                 Console.WriteLine("NXABlockListener loaded");
             }
             catch (Exception e)
             {
                 Console.Error.WriteLine($"NXABlockListener cannot load. Error: {e.Message}");
-                blockListenerManager?.Dispose();
+                taskManager?.Dispose();
             }
+
         }
 
         void IPersistencePlugin.OnCommit(NeoSystem system, Block block, DataCache snapshot)
         {
-            if (!Settings.Default.Active) return;
+            if (!Settings.Default.TurnedOn) return;
             if (system.Settings.Network != Settings.Default.Network) return;
 
-            if (blockListenerManager != null && blockListenerManager.Active)
-                BlockListenerManager.AddBlock(block);
+            if (taskManager != null)
+                taskManager.AddBlock(block);
         }
 
         [ConsoleCommand("stop blocklistener", Category = "BlockListener", Description = "Stop block listener service (NXABlockListener)")]
         public void StopBlockListener()
         {
-            if (blockListenerManager != null)
+            if (taskManager != null)
             {
                 Console.WriteLine("Stopping block listener");
-                blockListenerManager.StopBlockListener();
+                taskManager.StopBlockListener();
             }
             Console.WriteLine("Block listener stopped");
         }
@@ -77,16 +82,16 @@ namespace Nxa.Plugins
         [ConsoleCommand("start blocklistener", Category = "BlockListener", Description = "Start block listener service (NXABlockListener)")]
         public void StartBlockListener()
         {
-            if (!Settings.Default.Active)
+            if (!Settings.Default.TurnedOn)
             {
                 Console.WriteLine("NXABlockListener turned off. Check config file.");
                 return;
             }
 
-            if (blockListenerManager != null)
+            if (taskManager != null)
             {
                 Console.WriteLine("Starting block listener");
-                blockListenerManager.StartBlockListener();
+                taskManager.StartBlockListener();
                 Console.WriteLine("Block listener started");
             }
             else
@@ -112,8 +117,8 @@ namespace Nxa.Plugins
         public override void Dispose()
         {
             ConsoleWriter.Release();
-            blockListenerManager?.Dispose();
-            GC.SuppressFinalize(this);
+            taskManager?.Dispose();
+            //GC.SuppressFinalize(this);
         }
     }
 }

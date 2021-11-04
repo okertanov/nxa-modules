@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Nxa.Plugins.Db
+namespace Nxa.Plugins.Persistence
 {
     internal sealed class Settings
     {
