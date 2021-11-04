@@ -482,10 +482,10 @@ Response body:
 
 DeployContract
 ---
-Deploy smart contract. 
-First param:  Private key to sign deploy contract transaction.
-Second param: nef_image as base64 string
-Third param: manifest as base64 string or json string. 
+Deploy smart contract.   
+First param:  Private key to sign deploy contract transaction.  
+Second param: nef_image as base64 string  
+Third param: manifest as base64 string or json string.   
 
 Request body:
 
@@ -509,10 +509,10 @@ Response body:
 
 CreateDeployContract
 ---
-Create tranasction for deplying smart contract.  
-First param:  Public key to create transaction singers.
-Second param: nef_image as base64 string
-Third param: manifest as base64 string or json string. 
+Create tranasction for deplying smart contract.   
+First param:  Public key to create transaction singers.  
+Second param: nef_image as base64 string  
+Third param: manifest as base64 string or json string.   
 
 Request body:
 
