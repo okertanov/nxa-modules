@@ -51,7 +51,7 @@ namespace Nxa.Plugins
             }
             else
             {
-                result["success"] = true;
+                result["success"] = false;
                 result["message"] = "NXABlockListener cannot start.";
                 return ResponseConsole(result);
             }
@@ -132,7 +132,7 @@ namespace Nxa.Plugins
 
             var taskObj = StorageManager.Manager.GetTaskObject(guid);
 
-            result["success"] = true;
+            result["success"] = taskObj == null ? false : true;
             result["message"] = taskObj == null ? Messages.TaskNotFound : taskObj.ToJson();
             return ResponseConsole(result);
         }
@@ -157,7 +157,7 @@ namespace Nxa.Plugins
 
             var taskObj = taskManager.StartTask(guid);
 
-            result["success"] = true;
+            result["success"] = taskObj == null ? false : true;
             result["message"] = taskObj == null ? Messages.TaskNotFound : taskObj.ToJson();
             return ResponseConsole(result);
         }
@@ -183,7 +183,7 @@ namespace Nxa.Plugins
 
             var taskObj = taskManager.StopTask(guid);
 
-            result["success"] = true;
+            result["success"] = taskObj == null ? false : true;
             result["message"] = taskObj == null ? Messages.TaskNotFoundOrInactive : taskObj.ToJson();
             return ResponseConsole(result);
         }
