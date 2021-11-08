@@ -43,9 +43,31 @@ namespace Nxa.Plugins.Persistence.Db
             return db.Get(ReadOptions.Default, key);
         }
 
+
+        #region Dispose
+
+        private bool _disposedValue;
+
+        ~LevelDbStore() => Dispose(false);
+
         public void Dispose()
         {
-            db.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    db?.Dispose();
+                }
+                _disposedValue = true;
+            }
+        }
+
+        #endregion
     }
 }

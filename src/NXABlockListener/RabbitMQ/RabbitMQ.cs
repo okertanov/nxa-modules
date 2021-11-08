@@ -220,12 +220,33 @@ namespace Nxa.Plugins.RabbitMQ
             }
         }
 
+        #region Dispose
+
+        private bool _disposedValue;
+
+        ~RabbitMQ() => Dispose(false);
+
         public void Dispose()
         {
-            CloseConnection();
-            ConsoleWriter.UpdateRmqConnection("Closed");
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    CloseConnection();
+                    ConsoleWriter.UpdateRmqConnection("Closed");
+                }
+
+                _disposedValue = true;
+            }
+        }
+
+        #endregion
 
     }
 

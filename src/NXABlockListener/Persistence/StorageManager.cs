@@ -43,10 +43,10 @@ namespace Nxa.Plugins.Persistence
             }
             Manager = new StorageManager(path);
         }
-        public void Dispose()
-        {
-            storage?.Dispose();
-        }
+        //public void Dispose()
+        //{
+        //    storage?.Dispose();
+        //}
 
 
         public void AddTaskObject(TaskObject taskObject)
@@ -122,6 +122,32 @@ namespace Nxa.Plugins.Persistence
 
             return storage.Seek(prefix, values).Select(x => GetTaskObject(x.Key.KeyIdentifier));
         }
+
+        #region Dispose
+
+        private bool _disposedValue;
+
+        ~StorageManager() => Dispose(false);
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    storage?.Dispose();
+                }
+                _disposedValue = true;
+            }
+        }
+
+        #endregion
 
     }
 }

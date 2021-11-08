@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Nxa.Plugins.Pattern.Visitors
 {
-    public class Visitor : IVisitor
+    public class Visitor : IVisitor, IDisposable
     {
 
         private readonly ProtocolSettings settings;
@@ -104,10 +104,30 @@ namespace Nxa.Plugins.Pattern.Visitors
 
         }
 
+        #region Dispose
+
+        private bool _disposedValue;
+
+        ~Visitor() => Dispose(false);
+
         public void Dispose()
         {
-            this.rabbitMQ?.Dispose();
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    rabbitMQ?.Dispose();
+                }
+                _disposedValue = true;
+            }
+        }
+
+        #endregion
     }
 }

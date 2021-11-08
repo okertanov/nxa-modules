@@ -118,7 +118,7 @@ namespace Nxa.Plugins
         {
             ConsoleWriter.Release();
             taskManager?.Dispose();
-            //GC.SuppressFinalize(this);
+            GC.SuppressFinalize(this);
         }
     }
 }

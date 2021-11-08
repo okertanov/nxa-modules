@@ -203,10 +203,30 @@ namespace Nxa.Plugins.Persistence.Cache
 
         }
 
+        #region Dispose
+
+        private bool _disposedValue;
+
+        ~StorageCache() => Dispose(false);
+
         public void Dispose()
         {
-            store?.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    store?.Dispose();
+                }
+                _disposedValue = true;
+            }
+        }
+
+        #endregion
     }
 }

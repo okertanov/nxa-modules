@@ -34,12 +34,32 @@ namespace Nxa.Plugins.Persistence
             db.Put(WriteOptions.Default, rmq_block_index_key, value);
         }
 
+        #region Dispose
+
+        private bool _disposedValue;
+
+        ~LevelDbManager() => Dispose(false);
+
         public void Dispose()
         {
-            db?.Dispose();
-            db = null;
-            //GC.SuppressFinalize(this);
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    db?.Dispose();
+                }
+                db = null;
+                _disposedValue = true;
+            }
+        }
+
+        #endregion
 
     }
 }
