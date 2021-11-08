@@ -18,9 +18,12 @@ namespace Nxa.Plugins.Tasks
     {
         private TaskObject taskObject;
         private readonly NeoSystem neoSystem;
+
         private readonly Guid taskId;
-        private readonly Visitor visitor;
         private readonly CancellationToken cancellationToken;
+
+        private readonly RabbitMQ.RabbitMQ rabbitMQ;
+        private readonly Visitor visitor;
 
         private static ConcurrentDictionary<Guid, BlockingCollection<Block>> IncomingBlocks = new ConcurrentDictionary<Guid, BlockingCollection<Block>>();
 
@@ -31,7 +34,8 @@ namespace Nxa.Plugins.Tasks
             this.taskId = taskObject.Id;
             this.cancellationToken = cancellationToken;
 
-            this.visitor = new Visitor(new RabbitMQ.RabbitMQ(), neoSystem.Settings
+            this.rabbitMQ = new RabbitMQ.RabbitMQ();
+            this.visitor = new Visitor(this.rabbitMQ, neoSystem.Settings
                 , taskObject.TaskType == TaskType.Search ? taskObject.Id.ToString() : ""
                 , taskObject.TaskType == TaskType.Search ? taskObject.TaskParameters.SearchJSON : null);
 
@@ -53,6 +57,12 @@ namespace Nxa.Plugins.Tasks
             {
                 taskObject.TaskState = TaskState.Active;
                 StorageManager.Manager.UpdateTaskState(taskObject);
+            }
+
+            //create new queue for search task
+            if (this.taskObject.TaskType == TaskType.Search)
+            {
+                this.rabbitMQ.DeclareExchangeQueue("", this.taskId.ToString());
             }
 
             SnapshotProcessing();
@@ -171,6 +181,12 @@ namespace Nxa.Plugins.Tasks
             //update task state in db
             taskObject.TaskState = TaskState.Finished;
             StorageManager.Manager.UpdateTaskState(taskObject);
+
+            //send finish message for search task (So there is queue even if there is no messages)
+            if (this.taskObject.TaskType == TaskType.Search)
+            {
+                this.rabbitMQ.Send("Finished", "", this.taskId.ToString());
+            }
 
         }
 

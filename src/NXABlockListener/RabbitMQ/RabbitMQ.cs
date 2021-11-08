@@ -35,6 +35,44 @@ namespace Nxa.Plugins.RabbitMQ
             }
         }
 
+        public bool DeclareExchangeQueue(string exchange = "", string queue = "")
+        {
+            try
+            {
+                using (var channel = SetUpConnection())
+                {
+                    if (channel == null) { return false; }
+
+                    if (Plugins.Settings.Default.RMQ.ConfirmSelect)
+                    {
+                        channel.ConfirmSelect();
+                    }
+
+                    if (!String.IsNullOrEmpty(exchange))
+                    {
+                        channel.ExchangeDeclare(exchange: exchange, type: ExchangeType.Fanout, durable: false, autoDelete: false, arguments: null);
+                    }
+                    else if (!String.IsNullOrEmpty(queue))
+                    {
+                        channel.QueueDeclare(queue: queue, durable: false, exclusive: false, autoDelete: true);
+                    }
+
+                    if (Plugins.Settings.Default.RMQ.ConfirmSelect)
+                    {
+                        var result = channel.WaitForConfirms(confirmWaitTimeSec);
+                        return result;
+                    }
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                ConsoleWriter.UpdateRmqConnection("Error");
+                ConsoleWriter.WriteLine($"Error establishing connection to RMQ: {e.Message}");
+                CloseConnection();
+                return false;
+            }
+        }
 
         public bool Send(string msg, string exchange = "", string queue = "")
         {
@@ -78,44 +116,51 @@ namespace Nxa.Plugins.RabbitMQ
             }
         }
 
-        //public bool SendBatch(List<string> msgList)
-        //{
-        //    try
-        //    {
-        //        using (var channel = SetUpConnection())
-        //        {
-        //            if (channel == null) { return false; }
+        public bool SendBatch(List<string> msgList, string exchange = "", string queue = "")
+        {
+            try
+            {
+                using (var channel = SetUpConnection())
+                {
+                    if (channel == null) { return false; }
 
-        //            if (Plugins.Settings.Default.RMQ.ConfirmSelect)
-        //            {
-        //                channel.ConfirmSelect();
-        //            }
-        //            channel.ExchangeDeclare(exchange: Plugins.Settings.Default.RMQ.Exchange, type: ExchangeType.Fanout, durable: false, autoDelete: false, arguments: null);
+                    if (Plugins.Settings.Default.RMQ.ConfirmSelect)
+                    {
+                        channel.ConfirmSelect();
+                    }
+                    if (!String.IsNullOrEmpty(exchange))
+                    {
+                        channel.ExchangeDeclare(exchange: exchange, type: ExchangeType.Fanout, durable: false, autoDelete: false, arguments: null);
+                    }
+                    else if (!String.IsNullOrEmpty(queue))
+                    {
+                        channel.QueueDeclare(queue: queue, durable: false, exclusive: false, autoDelete: true);
+                    }
 
-        //            var basicPublishBatch = channel.CreateBasicPublishBatch();
-        //            foreach (var block in msgList)
-        //            {
-        //                var body = Encoding.UTF8.GetBytes(block);
-        //                basicPublishBatch.Add(exchange: Plugins.Settings.Default.RMQ.Exchange, routingKey: Plugins.Settings.Default.RMQ.Queue, mandatory: true, properties: null, new ReadOnlyMemory<byte>(body));
-        //            }
-        //            basicPublishBatch.Publish();
+                    var basicPublishBatch = channel.CreateBasicPublishBatch();
+                    foreach (var block in msgList)
+                    {
+                        var body = Encoding.UTF8.GetBytes(block);
+                        basicPublishBatch.Add(exchange: exchange, routingKey: queue, mandatory: true, properties: null, new ReadOnlyMemory<byte>(body));
+                    }
+                    basicPublishBatch.Publish();
 
-        //            if (Plugins.Settings.Default.RMQ.ConfirmSelect)
-        //            {
-        //                var result = channel.WaitForConfirms(confirmWaitTimeSec);
-        //                return result;
-        //            }
-        //            return true;
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        ConsoleWriter.UpdateRmqConnection("Error");
-        //        ConsoleWriter.WriteLine($"Error establishing connection to RMQ: {e.Message}");
-        //        CloseConnection();
-        //        return false;
-        //    }
-        //}
+                    if (Plugins.Settings.Default.RMQ.ConfirmSelect)
+                    {
+                        var result = channel.WaitForConfirms(confirmWaitTimeSec);
+                        return result;
+                    }
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                ConsoleWriter.UpdateRmqConnection("Error");
+                ConsoleWriter.WriteLine($"Error establishing connection to RMQ: {e.Message}");
+                CloseConnection();
+                return false;
+            }
+        }
 
         private IModel SetUpConnection()
         {
