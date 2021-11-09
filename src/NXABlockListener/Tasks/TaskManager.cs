@@ -73,7 +73,7 @@ namespace Nxa.Plugins.Tasks
             if (taskObj != null)
             {
                 CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-                BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token);
+                BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token, CleanTask);
                 TaskList[taskObj.Id] = new TaskListItem()
                 {
                     CancellationTokenSource = cancellationTokenSource,
@@ -112,7 +112,7 @@ namespace Nxa.Plugins.Tasks
 
             //run task
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token);
+            BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token, CleanTask);
             TaskList[taskObj.Id] = new TaskListItem()
             {
                 CancellationTokenSource = cancellationTokenSource,
@@ -172,7 +172,7 @@ namespace Nxa.Plugins.Tasks
             foreach (var taskObj in taskList)
             {
                 CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-                BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token);
+                BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token, CleanTask);
                 TaskList[taskObj.Id] = new TaskListItem()
                 {
                     CancellationTokenSource = cancellationTokenSource,
@@ -203,6 +203,15 @@ namespace Nxa.Plugins.Tasks
             Dispose();
         }
 
+        private bool CleanTask(Guid guid)
+        {
+            if (TaskList.ContainsKey(guid))
+            {
+                TaskList[guid].CancellationTokenSource.Dispose();
+                TaskList.Remove(guid);
+            }
+            return true;
+        }
 
         #region Dispose
 

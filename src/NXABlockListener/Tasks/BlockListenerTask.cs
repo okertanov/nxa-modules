@@ -21,18 +21,20 @@ namespace Nxa.Plugins.Tasks
 
         private readonly Guid taskId;
         private readonly CancellationToken cancellationToken;
+        private readonly Func<Guid, bool> cleanTask;
 
         private readonly RabbitMQ.RabbitMQ rabbitMQ;
         private readonly Visitor visitor;
 
         private static ConcurrentDictionary<Guid, BlockingCollection<Block>> IncomingBlocks = new ConcurrentDictionary<Guid, BlockingCollection<Block>>();
 
-        public BlockListenerTask(TaskObject taskObject, NeoSystem neoSystem, CancellationToken cancellationToken)
+        public BlockListenerTask(TaskObject taskObject, NeoSystem neoSystem, CancellationToken cancellationToken, Func<Guid, bool> cleanTask)
         {
             this.taskObject = taskObject;
             this.neoSystem = neoSystem;
             this.taskId = taskObject.Id;
             this.cancellationToken = cancellationToken;
+            this.cleanTask = cleanTask;
 
             this.rabbitMQ = new RabbitMQ.RabbitMQ();
             this.visitor = new Visitor(this.rabbitMQ, neoSystem.Settings
@@ -188,6 +190,7 @@ namespace Nxa.Plugins.Tasks
                 this.rabbitMQ.Send("Finished", "", this.taskId.ToString());
             }
 
+            cleanTask(taskId);
         }
 
 
