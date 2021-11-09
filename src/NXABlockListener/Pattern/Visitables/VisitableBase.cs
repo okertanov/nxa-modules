@@ -12,7 +12,9 @@ namespace Nxa.Plugins.Pattern.Visitables
 {
     public abstract class VisitableBase 
     {
-        public JObject obj { get; set; }
+        protected string name { get; set; }
+        public JObject Obj { get; set; }
+
         public string[] ExchangeList { get; set; }
         public string[] QueueList { get; set; }
         public bool AnnounceThis { get; set; }
@@ -46,5 +48,11 @@ namespace Nxa.Plugins.Pattern.Visitables
             AnnounceThis = true;
         }
 
+        public string AnnounceObject()
+        {
+            JObject jObject = new JObject();
+            jObject[name] = Obj;
+            return jObject.AsString();
+        }
     }
 }

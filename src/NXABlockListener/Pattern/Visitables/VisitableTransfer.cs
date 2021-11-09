@@ -11,8 +11,9 @@ namespace Nxa.Plugins.Pattern.Visitables
     {
         public VisitableTransfer()
         {
-            this.ExchangeList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == "transfer" && x.Exchange == true).Select(x => x.Name).ToArray();
-            this.QueueList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == "transfer" && x.Exchange == false).Select(x => x.Name).ToArray();
+            name = "transfer";
+            this.ExchangeList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == name && x.Exchange == true).Select(x => x.Name).ToArray();
+            this.QueueList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == name && x.Exchange == false).Select(x => x.Name).ToArray();
         }
 
         public override void Accept(IVisitor visitor, CancellationToken cancellationToken)
@@ -33,17 +34,19 @@ namespace Nxa.Plugins.Pattern.Visitables
             if (result["method"] == null || result["method"].AsString() != "transfer")
                 return false;
 
-            this.obj = new JObject();
-            this.obj["method"] = result["method"];
-            this.obj["assetid"] = result["assetid"];
+            Obj = new JObject();
+
+            Obj["method"] = result["method"];
+            Obj["assetid"] = result["assetid"];
+            
             JObject transferOutput = new JObject();
             transferOutput["data"] = result["action"][0];
             transferOutput["value"] = result["action"][1];
             transferOutput["addressto"] = result["action"][2];
             transferOutput["addressfrom"] = result["action"][3];
-            this.obj["transferoutput"] = transferOutput;
+            Obj["transferoutput"] = transferOutput;
 
-            Search(this.obj, "transfer", searchJson);
+            Search(Obj, name, searchJson);
 
             return true;
         }

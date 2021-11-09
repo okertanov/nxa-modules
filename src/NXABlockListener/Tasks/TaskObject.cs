@@ -46,7 +46,23 @@ namespace Nxa.Plugins.Tasks
         public TaskState TaskState { get; set; }
         public TaskType TaskType { get; set; }
 
-        public uint ActiveBlock { get; set; }
+        private uint _activeBlock = 0;
+        public uint ActiveBlock
+        {
+            get
+            {
+                if (_activeBlock < TaskParameters.FromBlock)
+                {
+                    _activeBlock = TaskParameters.FromBlock;
+                }
+                return _activeBlock;
+            }
+            set
+            {
+                _activeBlock = value;
+            }
+
+        }
 
         public JObject ToJson()
         {

@@ -13,13 +13,14 @@ namespace Nxa.Plugins.Pattern.Visitables
 {
     public class VisitableTransaction : VisitableBase, IVisitable
     {
-        public Transaction transaction { get; private set; }
-
+      
         public VisitableTransaction()
         {
-            this.ExchangeList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == "transaction" && x.Exchange == true).Select(x => x.Name).ToArray();
-            this.QueueList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == "transaction" && x.Exchange == false).Select(x => x.Name).ToArray();
+            name = "transaction";
+            this.ExchangeList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == name && x.Exchange == true).Select(x => x.Name).ToArray();
+            this.QueueList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == name && x.Exchange == false).Select(x => x.Name).ToArray();
         }
+        public Transaction transaction { get; private set; }
 
         public override void Accept(IVisitor visitor, CancellationToken cancellationToken)
         {
@@ -31,9 +32,10 @@ namespace Nxa.Plugins.Pattern.Visitables
             this.transaction = Utility.TransactionFromJson(jsonObj, protocolSettings);
             if (this.transaction == null)
                 return false;
-            this.obj = jsonObj;
 
-            Search(this.obj, "transaction", searchJson);
+            Obj = jsonObj;
+
+            Search(Obj, name, searchJson);
 
             return true;
         }

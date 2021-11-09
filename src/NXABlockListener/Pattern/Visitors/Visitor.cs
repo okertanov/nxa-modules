@@ -31,7 +31,7 @@ namespace Nxa.Plugins.Pattern.Visitors
                 return false;
 
             //get block tx
-            foreach (var txJson in (JArray)block.obj["tx"])
+            foreach (var txJson in (JArray)block.Obj["tx"])
             {
                 foreach (var item in Parse(txJson))
                 {
@@ -49,7 +49,7 @@ namespace Nxa.Plugins.Pattern.Visitors
                 return false;
 
             //get transaction types
-            foreach (var item in Parse(tx.obj["script"]))
+            foreach (var item in Parse(tx.Obj["script"]))
             {
                 item.Accept(this, cancellationToken);
             }
@@ -85,7 +85,7 @@ namespace Nxa.Plugins.Pattern.Visitors
                 if (visitableBase.AnnounceThis)
                 {
                     //send serch content
-                    this.rabbitMQ.SendToRabbitMQ(visitableBase.obj.AsString(), cancellationToken, "", rmqSearchQueue);
+                    this.rabbitMQ.SendToRabbitMQ(visitableBase.AnnounceObject(), cancellationToken, "", rmqSearchQueue);
                 }
             }
             else
@@ -93,12 +93,12 @@ namespace Nxa.Plugins.Pattern.Visitors
                 //send listener contetnt
                 foreach (var exchange in visitableBase.ExchangeList)
                 {
-                    this.rabbitMQ.SendToRabbitMQ(visitableBase.obj.AsString(), cancellationToken, exchange);
+                    this.rabbitMQ.SendToRabbitMQ(visitableBase.AnnounceObject(), cancellationToken, exchange);
                 }
 
                 foreach (var queue in visitableBase.QueueList)
                 {
-                    this.rabbitMQ.SendToRabbitMQ(visitableBase.obj.AsString(), cancellationToken, "", queue);
+                    this.rabbitMQ.SendToRabbitMQ(visitableBase.AnnounceObject(), cancellationToken, "", queue);
                 }
             }
 

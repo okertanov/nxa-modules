@@ -15,8 +15,9 @@ namespace Nxa.Plugins.Pattern.Visitables
     {
         public VisitableBlock()
         {
-            this.ExchangeList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == "block" && x.Exchange == true).Select(x => x.Name).ToArray();
-            this.QueueList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == "block" && x.Exchange == false).Select(x => x.Name).ToArray();
+            name = "block";
+            this.ExchangeList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == name && x.Exchange == true).Select(x => x.Name).ToArray();
+            this.QueueList = Settings.Default.RMQ.Exchanges.Where(x => x.Type == name && x.Exchange == false).Select(x => x.Name).ToArray();
         }
 
         public Block block { get; private set; }
@@ -32,9 +33,9 @@ namespace Nxa.Plugins.Pattern.Visitables
             if (this.block == null)
                 return false;
 
-            this.obj = jsonObj;
+            Obj = jsonObj;
 
-            Search(this.obj, "block", searchJson);
+            Search(Obj, name, searchJson);
 
             return true;
         }

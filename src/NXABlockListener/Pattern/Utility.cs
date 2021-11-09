@@ -15,6 +15,13 @@ using System.Text;
 
 namespace Nxa.Plugins.Pattern
 {
+    public enum ParseType
+    {
+        Block,
+        Transaction,
+        Transfer,
+        SCDeployment
+    }
     public static class Utility
     {
         public static UInt160 ToScriptHash(this JObject value, ProtocolSettings protocolSettings = null)
@@ -135,7 +142,7 @@ namespace Nxa.Plugins.Pattern
             };
         }
 
-        public static JObject ParseScript(byte[] array)
+        public static JObject ParseScript(byte[] array) //, ParseType? parseType = null)
         {
             JObject jObject = new JObject();
             JArray jArray = new JArray();
@@ -157,7 +164,7 @@ namespace Nxa.Plugins.Pattern
                         continue;
                 }
 
-                i = array.ParseOpCode(opCode, i, out object result);
+                i = array.ParseOpCode(opCode, i, out object result); //, parseType);
 
                 if (jObject["action"] == null)
                 {
@@ -186,7 +193,7 @@ namespace Nxa.Plugins.Pattern
             return jObject;
         }
 
-        public static int ParseOpCode(this byte[] array, OpCode opCode, int index, out object result)
+        public static int ParseOpCode(this byte[] array, OpCode opCode, int index, out object result) //, ParseType? parseType = null)
         {
             result = null;
             int length;
@@ -508,7 +515,7 @@ namespace Nxa.Plugins.Pattern
             return index;
         }
 
-        public static object ParseByteArray(byte[] array)
+        public static object ParseByteArray(byte[] array, ParseType? parseType = null)
         {
             if (array.Length == 20)
             {
@@ -533,6 +540,8 @@ namespace Nxa.Plugins.Pattern
                 }
             }
 
+            //if (!parseType.HasValue || parseType == ParseType.SCDeployment)
+            //{
             try
             {
                 using (MemoryStream stream = new MemoryStream(array))
@@ -546,6 +555,7 @@ namespace Nxa.Plugins.Pattern
             catch
             {
             }
+            //}
             return Encoding.UTF8.GetString(array);
         }
 
@@ -566,6 +576,15 @@ namespace Nxa.Plugins.Pattern
 
             return false;
         }
+
+    }
+
+    public class ParseNTF
+    {
+        //type
+
+        //stage
+
 
     }
 }
