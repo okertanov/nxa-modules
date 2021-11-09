@@ -203,14 +203,35 @@ namespace Nxa.Plugins.Tasks
             Dispose();
         }
 
+
+        #region Dispose
+
+        private bool _disposedValue;
+
+        ~TaskManager() => Dispose(false);
+
         public void Dispose()
         {
-            foreach (var task in TaskList)
-            {
-                task.Value.CancellationTokenSource.Dispose();
-            }
-            TaskList.Clear();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    foreach (var task in TaskList)
+                    {
+                        task.Value.CancellationTokenSource.Dispose();
+                    }
+                }
+                TaskList.Clear();
+                _disposedValue = true;
+            }
+        }
+
+        #endregion
     }
 }

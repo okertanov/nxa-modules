@@ -190,13 +190,32 @@ namespace Nxa.Plugins.Tasks
 
         }
 
+
+        #region Dispose
+
+        private bool _disposedValue;
+
+        ~BlockListenerTask() => Dispose(false);
+
         public void Dispose()
         {
-            //remove blocking collection from concurency dictionary
-            IncomingBlocks.Remove(this.taskId, out BlockingCollection<Block> value);
-            value?.Dispose();
-
-            throw new NotImplementedException();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    IncomingBlocks.Remove(this.taskId, out BlockingCollection<Block> value);
+                    value?.Dispose();
+                }
+                _disposedValue = true;
+            }
+        }
+
+        #endregion
     }
 }
