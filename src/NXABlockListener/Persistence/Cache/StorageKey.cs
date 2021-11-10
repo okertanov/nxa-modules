@@ -1,6 +1,5 @@
 ﻿using Neo.Cryptography;
 using System;
-using System.Buffers.Binary;
 using System.Text;
 
 namespace Nxa.Plugins.Persistence.Cache

@@ -1,12 +1,9 @@
 ﻿using Neo;
 using Neo.Network.P2P.Payloads;
-using Nxa.Plugins.Pattern.Visitors;
 using Nxa.Plugins.Persistence;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,8 +28,6 @@ namespace Nxa.Plugins.Tasks
         public TaskManager(NeoSystem neoSystem)
         {
             this.neoSystem = neoSystem;
-            ////for search testing
-            //Active = true;
             if (Settings.Default.AutoStart)
             {
                 Load();
@@ -73,7 +68,7 @@ namespace Nxa.Plugins.Tasks
             if (taskObj != null)
             {
                 CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-                BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token, CleanTask);
+                BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token, cleanUpTask);
                 TaskList[taskObj.Id] = new TaskListItem()
                 {
                     CancellationTokenSource = cancellationTokenSource,
@@ -96,14 +91,11 @@ namespace Nxa.Plugins.Tasks
 
             if (TaskList.ContainsKey(taskObj.Id))
             {
-                //task allready active
-                //return TaskList[taskObj.Id].BlockListenerTask.GetTaskObject();
                 return false;
             }
 
             if (StorageManager.Manager.CheckIfKeyExist(taskObj))
             {
-                //task allready exist in database
                 return false;
             }
 
@@ -112,7 +104,7 @@ namespace Nxa.Plugins.Tasks
 
             //run task
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token, CleanTask);
+            BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token, cleanUpTask);
             TaskList[taskObj.Id] = new TaskListItem()
             {
                 CancellationTokenSource = cancellationTokenSource,
@@ -142,8 +134,6 @@ namespace Nxa.Plugins.Tasks
                 {
                     //stopped
                 }
-                TaskList[guid].CancellationTokenSource.Dispose();
-                TaskList.Remove(guid);
                 return taskObject;
             }
             return null;
@@ -172,7 +162,7 @@ namespace Nxa.Plugins.Tasks
             foreach (var taskObj in taskList)
             {
                 CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-                BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token, CleanTask);
+                BlockListenerTask blockListenerTask = new BlockListenerTask(taskObj, neoSystem, cancellationTokenSource.Token, cleanUpTask);
                 TaskList[taskObj.Id] = new TaskListItem()
                 {
                     CancellationTokenSource = cancellationTokenSource,
@@ -203,7 +193,7 @@ namespace Nxa.Plugins.Tasks
             Dispose();
         }
 
-        private bool CleanTask(Guid guid)
+        private bool cleanUpTask(Guid guid)
         {
             if (TaskList.ContainsKey(guid))
             {

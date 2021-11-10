@@ -48,6 +48,7 @@ namespace Nxa.Plugins
             try
             {
                 taskManager = new TaskManager(system);
+                ConsoleWriter.SetUpState(ref taskManager);
                 Console.WriteLine("NXABlockListener loaded");
             }
             catch (Exception e)

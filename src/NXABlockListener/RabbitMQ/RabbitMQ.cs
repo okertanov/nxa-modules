@@ -67,7 +67,6 @@ namespace Nxa.Plugins.RabbitMQ
             }
             catch (Exception e)
             {
-                ConsoleWriter.UpdateRmqConnection("Error");
                 ConsoleWriter.WriteLine($"Error establishing connection to RMQ: {e.Message}");
                 CloseConnection();
                 return false;
@@ -109,7 +108,6 @@ namespace Nxa.Plugins.RabbitMQ
             }
             catch (Exception e)
             {
-                ConsoleWriter.UpdateRmqConnection("Error");
                 ConsoleWriter.WriteLine($"Error establishing connection to RMQ: {e.Message}");
                 CloseConnection();
                 return false;
@@ -155,7 +153,6 @@ namespace Nxa.Plugins.RabbitMQ
             }
             catch (Exception e)
             {
-                ConsoleWriter.UpdateRmqConnection("Error");
                 ConsoleWriter.WriteLine($"Error establishing connection to RMQ: {e.Message}");
                 CloseConnection();
                 return false;
@@ -197,12 +194,10 @@ namespace Nxa.Plugins.RabbitMQ
                     endpoints.Add(new AmqpTcpEndpoint(endpoint.Host, endpoint.Port));
                 }
                 connection = factory.CreateConnection(endpoints);
-                ConsoleWriter.UpdateRmqConnection("Active");
             }
             catch (Exception ex)
             {
                 ConsoleWriter.WriteLine($"Could not create RMQ connection: {ex.Message}");
-                ConsoleWriter.UpdateRmqConnection($"Error: {ex.Message}");
             }
         }
 
@@ -239,7 +234,7 @@ namespace Nxa.Plugins.RabbitMQ
                 if (disposing)
                 {
                     CloseConnection();
-                    ConsoleWriter.UpdateRmqConnection("Closed");
+                    ConsoleWriter.WriteLine("RMQ connection closed");
                 }
 
                 _disposedValue = true;

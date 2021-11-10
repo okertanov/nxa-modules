@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nxa.Plugins.Tasks;
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,9 +11,8 @@ namespace Nxa.Plugins
         private static bool WriteToScreen = false;
 
         private static readonly BlockingCollection<string> BblockingCollection = new();
-        private static uint RmqBlockIndex = 0;
-        private static string RmqConnection = "Unconnected";
-        private static string BlockListenerState = "Not started";
+        private static TaskManager TaskManager;
+        private static string BlockListenerState { get { if (TaskManager.Active) { return "Active"; } else { return "Inactive"; } } }
 
         static ConsoleWriter()
         {
@@ -22,20 +22,10 @@ namespace Nxa.Plugins
             if (WriteToScreen)
                 BblockingCollection.Add(value);
         }
-        public static void UpdateRmqBlock(uint index)
+
+        public static void SetUpState(ref TaskManager taskManager)
         {
-            RmqBlockIndex = index;
-        }
-        public static void UpdateRmqConnection(string conn)
-        {
-            RmqConnection = conn;
-        }
-        public static void UpdateBlockListenerState(bool active)
-        {
-            if (active)
-                BlockListenerState = "Active";
-            else
-                BlockListenerState = "Inactive";
+            TaskManager = taskManager;
         }
         public static void ShowState()
         {

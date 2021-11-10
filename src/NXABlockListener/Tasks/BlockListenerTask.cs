@@ -7,10 +7,7 @@ using Nxa.Plugins.Persistence;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Nxa.Plugins.Tasks
 {
@@ -21,20 +18,20 @@ namespace Nxa.Plugins.Tasks
 
         private readonly Guid taskId;
         private readonly CancellationToken cancellationToken;
-        private readonly Func<Guid, bool> cleanTask;
+        private readonly Func<Guid, bool> cleanUpTask;
 
         private readonly RabbitMQ.RabbitMQ rabbitMQ;
         private readonly Visitor visitor;
 
         private static ConcurrentDictionary<Guid, BlockingCollection<Block>> IncomingBlocks = new ConcurrentDictionary<Guid, BlockingCollection<Block>>();
 
-        public BlockListenerTask(TaskObject taskObject, NeoSystem neoSystem, CancellationToken cancellationToken, Func<Guid, bool> cleanTask)
+        public BlockListenerTask(TaskObject taskObject, NeoSystem neoSystem, CancellationToken cancellationToken, Func<Guid, bool> cleanUpTask)
         {
             this.taskObject = taskObject;
             this.neoSystem = neoSystem;
             this.taskId = taskObject.Id;
             this.cancellationToken = cancellationToken;
-            this.cleanTask = cleanTask;
+            this.cleanUpTask = cleanUpTask;
 
             this.rabbitMQ = new RabbitMQ.RabbitMQ();
             this.visitor = new Visitor(this.rabbitMQ, neoSystem.Settings
@@ -55,13 +52,10 @@ namespace Nxa.Plugins.Tasks
             IncomingBlocks.TryAdd(this.taskId, new BlockingCollection<Block>());
 
             //update task state
-            if (taskObject.TaskState != TaskState.Active)
-            {
-                taskObject.TaskState = TaskState.Active;
-                StorageManager.Manager.UpdateTaskState(taskObject);
-            }
+            taskObject.TaskState = TaskState.Active;
+            StorageManager.Manager.UpdateTaskState(taskObject);
 
-            //create new queue for search task
+            //create new queue in RabbitMQ for search task
             if (this.taskObject.TaskType == TaskType.Search)
             {
                 this.rabbitMQ.DeclareExchangeQueue("", this.taskId.ToString());
@@ -175,6 +169,9 @@ namespace Nxa.Plugins.Tasks
                 taskObject.TaskState = TaskState.Canceled;
             }
             StorageManager.Manager.UpdateTaskState(taskObject);
+
+            //dispose then throw
+            Dispose();
             cancellationToken.ThrowIfCancellationRequested();
         }
 
@@ -190,7 +187,7 @@ namespace Nxa.Plugins.Tasks
                 this.rabbitMQ.Send("Finished", "", this.taskId.ToString());
             }
 
-            cleanTask(taskId);
+            Dispose();
         }
 
 
@@ -214,6 +211,7 @@ namespace Nxa.Plugins.Tasks
                 {
                     IncomingBlocks.Remove(this.taskId, out BlockingCollection<Block> value);
                     value?.Dispose();
+                    cleanUpTask(taskId);
                 }
                 _disposedValue = true;
             }

@@ -1,12 +1,8 @@
-﻿using Neo.Persistence;
-using Neo.SmartContract;
+﻿using Neo.IO;
+using Neo.Persistence;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Nxa.Plugins.Persistence.Db;
-using Neo.IO;
 
 namespace Nxa.Plugins.Persistence.Cache
 {

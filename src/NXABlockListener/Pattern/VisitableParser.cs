@@ -1,17 +1,9 @@
 ﻿using Neo;
-using Neo.Cryptography;
-using Neo.Cryptography.ECC;
 using Neo.IO.Json;
-using Neo.Network.P2P.Payloads;
-using Neo.VM.Types;
-using Neo.Wallets;
 using Nxa.Plugins.Pattern.Visitables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Nxa.Plugins.Pattern
 {

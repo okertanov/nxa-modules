@@ -1,14 +1,10 @@
-﻿using Neo.Persistence;
-using Nxa.Plugins.Persistence.Cache;
+﻿using Nxa.Plugins.Persistence.Cache;
 using Nxa.Plugins.Persistence.Db;
 using Nxa.Plugins.Tasks;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Nxa.Plugins.Persistence
 {
@@ -43,10 +39,6 @@ namespace Nxa.Plugins.Persistence
             }
             Manager = new StorageManager(path);
         }
-        //public void Dispose()
-        //{
-        //    storage?.Dispose();
-        //}
 
 
         public void AddTaskObject(TaskObject taskObject)

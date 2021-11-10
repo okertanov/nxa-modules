@@ -5,7 +5,6 @@ using Neo.IO.Json;
 using Neo.Network.P2P.Payloads;
 using Neo.SmartContract;
 using Neo.VM;
-using Neo.VM.Types;
 using Neo.Wallets;
 using System;
 using System.IO;

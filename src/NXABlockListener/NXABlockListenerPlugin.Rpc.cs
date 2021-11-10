@@ -1,15 +1,11 @@
-﻿using Neo.ConsoleService;
-using Neo.IO.Json;
+﻿using Neo.IO.Json;
 using Neo.Plugins;
 using Nxa.Plugins.Persistence;
 using Nxa.Plugins.Tasks;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Nxa.Plugins
 {
@@ -208,7 +204,7 @@ namespace Nxa.Plugins
 
             if (taskManager.CreateTask(taskObject))
             {
-                taskObject.TaskState = TaskState.Active;    //so we dont return state None
+                taskObject.TaskState = TaskState.Active;    //so we dont return state None if not updated yet
                 result["success"] = true;
                 result["message"] = taskObject.ToJson();
             }
