@@ -141,13 +141,12 @@ namespace Nxa.Plugins.Pattern
             };
         }
 
-        public static JObject ParseScript(byte[] array) //, ParseType? parseType = null)
+        public static JObject ParseScript(byte[] array, ParseType? parseType = null)
         {
             JObject jObject = new JObject();
             JArray jArray = new JArray();
             for (int i = 0; i < array.Length; i++)
             {
-                //OpCode opCode = (OpCode)Enum.Parse(typeof(OpCode), array[i].ToString());
                 OpCode opCode = (OpCode)array[i];
 
                 switch (opCode)
@@ -163,7 +162,7 @@ namespace Nxa.Plugins.Pattern
                         continue;
                 }
 
-                i = array.ParseOpCode(opCode, i, out object result); //, parseType);
+                i = array.ParseOpCode(opCode, i, out object result, parseType);
 
                 if (jObject["action"] == null)
                 {
@@ -192,7 +191,7 @@ namespace Nxa.Plugins.Pattern
             return jObject;
         }
 
-        public static int ParseOpCode(this byte[] array, OpCode opCode, int index, out object result) //, ParseType? parseType = null)
+        public static int ParseOpCode(this byte[] array, OpCode opCode, int index, out object result, ParseType? parseType = null)
         {
             result = null;
             int length;
@@ -539,22 +538,22 @@ namespace Nxa.Plugins.Pattern
                 }
             }
 
-            //if (!parseType.HasValue || parseType == ParseType.SCDeployment)
-            //{
-            try
+            if (!parseType.HasValue || parseType == ParseType.SCDeployment)
             {
-                using (MemoryStream stream = new MemoryStream(array))
-                using (BinaryReader reader = new BinaryReader(stream))
+                try
                 {
-                    NefFile nefFile = new NefFile();
-                    nefFile.Deserialize(reader);
-                    return nefFile.ToJson();
+                    using (MemoryStream stream = new MemoryStream(array))
+                    using (BinaryReader reader = new BinaryReader(stream))
+                    {
+                        NefFile nefFile = new NefFile();
+                        nefFile.Deserialize(reader);
+                        return nefFile.ToJson();
+                    }
+                }
+                catch
+                {
                 }
             }
-            catch
-            {
-            }
-            //}
             return Encoding.UTF8.GetString(array);
         }
 
