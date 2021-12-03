@@ -67,6 +67,11 @@ namespace Nxa.Plugins.HelperObjects
             throw new NotImplementedException();
         }
 
+        public override void Delete()
+        {
+            throw new NotImplementedException();
+        }
+
         public override WalletAccount GetAccount(UInt160 scriptHash)
         {
             accounts.TryGetValue(scriptHash, out OperationAccount account);

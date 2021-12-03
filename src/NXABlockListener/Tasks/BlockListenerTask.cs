@@ -79,7 +79,6 @@ namespace Nxa.Plugins.Tasks
 
                 if (activeBlockIndex < currentBlockIndex)
                 {
-                    int i = 0;
                     List<Block> unsentBlocks = new();
                     while (activeBlockIndex < currentBlockIndex)
                     {

@@ -130,7 +130,7 @@ namespace Nxa.Plugins.Tasks
                 {
                     Task.WaitAll(TaskList[guid].Task);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     //stopped
                 }
@@ -184,7 +184,7 @@ namespace Nxa.Plugins.Tasks
             {
                 Task.WaitAll(TaskList.Select(x => x.Value.Task).ToArray());
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 //stopped
             }

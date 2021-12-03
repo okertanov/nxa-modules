@@ -8,7 +8,7 @@
   <PropertyGroup>
     <VersionPrefix>0.0.1</VersionPrefix>
     <VersionSuffix>nxa</VersionSuffix>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Nxa.Plugins</RootNamespace>
     <Authors>The Team11</Authors>
     <PackageTags>NXA;NEO;Blockchain</PackageTags>
