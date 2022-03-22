@@ -11,6 +11,7 @@ using Nxa.Plugins.HelperObjects;
 using System;
 using System.Numerics;
 using System.Security.Cryptography;
+using Neo.Network.P2P.Payloads;
 
 namespace Nxa.Plugins
 {
@@ -68,8 +69,8 @@ namespace Nxa.Plugins
 
         internal static bool RegisterAddressByCNR(string cname, UInt160 address, string signer, NeoSystem system, ref JObject result)
         {
-            var key = Utility.GetKeyPair(signer);
-            var account = new OperationAccount(key, system.Settings);
+            var keyPair = Utility.GetKeyPair(signer);
+            var account = new OperationAccount(keyPair, system.Settings);
             var wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
 
             Console.WriteLine($"{cname} -> {address}: {signer} : {account.Address} : {wallet.ToString()}");
@@ -83,8 +84,17 @@ namespace Nxa.Plugins
                     scriptBuilder.EmitDynamicCall(scriptHash, "register", cname, address);
                     script = scriptBuilder.ToArray();
                 }
-                var transactionResult= Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, account: key.PublicKeyHash, gas: (long)200_00000000);
-                result["result"] = transactionResult;
+
+                UInt160 sender = Contract.CreateSignatureRedeemScript(keyPair.PublicKey).ToScriptHash();
+                Signer[] signers = new[] { new Signer { Scopes = WitnessScope.CalledByEntry, Account = sender } };
+
+                var snapshot = system.StoreView;
+                var tx = wallet.MakeTransaction(snapshot, script, sender, signers, maxGas: TestModeGas);
+
+                var sent = Operations.SignAndSendTx(system, snapshot, tx, wallet, true);
+
+                result["sent"] = sent;
+
                 return true;
             }
             catch (Exception e)
@@ -120,8 +130,8 @@ namespace Nxa.Plugins
 
         internal static void UnregisterAddressByCNR(string cname, string signer, NeoSystem system, ref JObject result)
         {
-            var key = Utility.GetKeyPair(signer);
-            var account = new OperationAccount(key, system.Settings);
+            var keyPair = Utility.GetKeyPair(signer);
+            var account = new OperationAccount(keyPair, system.Settings);
             var wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
 
             try
@@ -133,8 +143,16 @@ namespace Nxa.Plugins
                     scriptBuilder.EmitDynamicCall(scriptHash, "unregister", cname);
                     script = scriptBuilder.ToArray();
                 }
-                var transactionResult = Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, account: key.PublicKeyHash, gas: (long)200_00000000);
-                result["result"] = transactionResult;
+                
+                UInt160 sender = Contract.CreateSignatureRedeemScript(keyPair.PublicKey).ToScriptHash();
+                Signer[] signers = new[] { new Signer { Scopes = WitnessScope.CalledByEntry, Account = sender } };
+
+                var snapshot = system.StoreView;
+                var tx = wallet.MakeTransaction(snapshot, script, sender, signers, maxGas: TestModeGas);
+
+                var sent = Operations.SignAndSendTx(system, snapshot, tx, wallet, true);
+
+                result["sent"] = sent;
             }
             catch (Exception e)
             {
