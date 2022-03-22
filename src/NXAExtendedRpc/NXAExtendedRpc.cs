@@ -8,6 +8,7 @@ namespace Nxa.Plugins
     {
         public override string Name => "ExtenedRpcServer";
         public override string Description => "Enables Extened RPC for the node";
+        public const long TestModeGas = 20_00000000;
 
         private NeoSystem system;
         private Settings settings;

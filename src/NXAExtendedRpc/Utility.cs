@@ -174,6 +174,19 @@ namespace Nxa.Plugins
             return (s.Length % 4 == 0) && Regex.IsMatch(s, @"^[a-zA-Z0-9\+/]*={0,3}$", RegexOptions.None);
 
         }
+        public static bool IsCNRAddress(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return false;
+            }
 
+            bool isCNRAddress =
+                Regex.Match(input, @"^[a-zA-Z0-9]*\.(id.dvita.com)$").Success ||
+                input.StartsWith('@') ||
+                (input.Contains('@') && input.Contains('.'));
+
+            return isCNRAddress;
+        }
     }
 }
