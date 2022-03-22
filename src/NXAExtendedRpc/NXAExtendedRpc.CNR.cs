@@ -73,8 +73,6 @@ namespace Nxa.Plugins
             var account = new OperationAccount(keyPair, system.Settings);
             var wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
 
-            Console.WriteLine($"{cname} -> {address}: {signer} : {account.Address} : {wallet.ToString()}");
-
             try
             {
                 byte[] script;
