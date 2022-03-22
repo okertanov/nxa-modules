@@ -47,9 +47,9 @@ namespace Nxa.Plugins
         [RpcMethod]
         protected virtual JObject Register(JArray _params)
         {
-            string cname = _params[0].ToString();
-            UInt160 address = _params[1].ToScriptHash(system.Settings);
-            string privateKey = _params[2].AsString();
+            var cname = _params[0].ToString();
+            var address = _params[1].ToScriptHash(system.Settings);
+            var privateKey = _params[2].AsString();
             var result = new JObject();
             result["cname"] = cname;
             result["address"] = address.ToString();
@@ -68,14 +68,14 @@ namespace Nxa.Plugins
 
         internal static bool RegisterAddressByCNR(string cname, UInt160 address, string signer, NeoSystem system, ref JObject result)
         {
-            KeyPair key = Utility.GetKeyPair(signer);
-            OperationAccount account = new OperationAccount(key, system.Settings);
-            OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
+            var key = Utility.GetKeyPair(signer);
+            var account = new OperationAccount(key, system.Settings);
+            var wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
 
             try
             {
                 byte[] script;
-                using (ScriptBuilder scriptBuilder = new ScriptBuilder())
+                using (var scriptBuilder = new ScriptBuilder())
                 {
                     var scriptHash = scriptHashStr.ToScriptHash(system.Settings.AddressVersion);
                     scriptBuilder.EmitDynamicCall(scriptHash, "register", cname, address);
@@ -99,8 +99,8 @@ namespace Nxa.Plugins
         [RpcMethod]
         protected virtual JObject Unregister(JArray _params)
         {
-            string cname = _params[0].ToString();
-            string privateKey = _params[1].AsString();
+            var cname = _params[0].ToString();
+            var privateKey = _params[1].AsString();
             var result = new JObject();
             result["cname"] = cname;
 
@@ -116,16 +116,16 @@ namespace Nxa.Plugins
             return result;
         }
 
-        internal static bool UnregisterAddressByCNR(string cname, string signer, NeoSystem system, ref JObject result)
+        internal static void UnregisterAddressByCNR(string cname, string signer, NeoSystem system, ref JObject result)
         {
-            KeyPair key = Utility.GetKeyPair(signer);
-            OperationAccount account = new OperationAccount(key, system.Settings);
-            OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
+            var key = Utility.GetKeyPair(signer);
+            var account = new OperationAccount(key, system.Settings);
+            var wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
 
             try
             {
                 byte[] script;
-                using (ScriptBuilder scriptBuilder = new ScriptBuilder())
+                using (var scriptBuilder = new ScriptBuilder())
                 {
                     var scriptHash = scriptHashStr.ToScriptHash(system.Settings.AddressVersion);
                     scriptBuilder.EmitDynamicCall(scriptHash, "unregister", cname);
@@ -133,14 +133,11 @@ namespace Nxa.Plugins
                 }
                 var transactionResult = Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, account: key.PublicKeyHash);
                 result["result"] = transactionResult;
-                return true;
             }
             catch (Exception e)
             {
                 result["error"] = $"Error: {e.Message}: {e.StackTrace}.";
             }
-
-            return false;
         }
 
         private UInt160 ResolveAddressByCNR(NeoSystem neoSystem, string cname)
@@ -159,7 +156,6 @@ namespace Nxa.Plugins
                         {
                             var resultSpan = ((ByteString)result).GetSpan();
                             var resultScriptHash = new UInt160(resultSpan);
-                            Console.WriteLine($"CNR for: {cname} is RESULT: {result.Type} {resultScriptHash}");
                             return resultScriptHash;
                         }
                         else
