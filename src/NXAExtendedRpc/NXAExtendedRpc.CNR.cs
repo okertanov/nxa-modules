@@ -24,7 +24,7 @@ namespace Nxa.Plugins
         [RpcMethod]
         protected virtual JObject Resolve(JArray _params)
         {
-            string cname = _params[0].ToString();
+            string cname = _params[0].AsString();
             var result = new JObject();
             result["cname"] = cname;
 
@@ -47,7 +47,7 @@ namespace Nxa.Plugins
         [RpcMethod]
         protected virtual JObject Register(JArray _params)
         {
-            var cname = _params[0].ToString();
+            var cname = _params[0].AsString();
             var address = _params[1].ToScriptHash(system.Settings);
             var privateKey = _params[2].AsString();
             var result = new JObject();
@@ -99,7 +99,7 @@ namespace Nxa.Plugins
         [RpcMethod]
         protected virtual JObject Unregister(JArray _params)
         {
-            var cname = _params[0].ToString();
+            var cname = _params[0].AsString();
             var privateKey = _params[1].AsString();
             var result = new JObject();
             result["cname"] = cname;
