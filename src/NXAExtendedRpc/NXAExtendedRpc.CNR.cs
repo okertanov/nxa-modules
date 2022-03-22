@@ -81,7 +81,7 @@ namespace Nxa.Plugins
                     scriptBuilder.EmitDynamicCall(scriptHash, "register", cname, address);
                     script = scriptBuilder.ToArray();
                 }
-                var transactionResult= Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, account: key.PublicKeyHash);
+                var transactionResult= Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, account: key.PublicKeyHash, gas: (long)200_00000000);
                 result["result"] = transactionResult;
                 return true;
             }
@@ -131,7 +131,7 @@ namespace Nxa.Plugins
                     scriptBuilder.EmitDynamicCall(scriptHash, "unregister", cname);
                     script = scriptBuilder.ToArray();
                 }
-                var transactionResult = Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, account: key.PublicKeyHash);
+                var transactionResult = Operations.CreateSendTransaction(system: system, script: script, wallet: wallet, account: key.PublicKeyHash, gas: (long)200_00000000);
                 result["result"] = transactionResult;
             }
             catch (Exception e)
