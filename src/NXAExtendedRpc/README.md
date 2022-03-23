@@ -550,3 +550,112 @@ Response body:
             "base64txjson": "eyJoYXNoIjoiMHgy..."
         }
     }
+
+Canonical Name Resolution
+================
+
+Resolve
+---
+
+Resolves canonical name to according address.
+Param: canonical name as string
+
+Request body:
+{
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "resolve",
+    "params": ["@name123"]
+}
+
+Response body:
+{
+    "jsonrpc": "2.0",
+    "id": 2,
+    "result": {
+        "cname": "@name123",
+        "address": "NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY"
+    }
+}
+
+curl example:
+
+curl rpc.testnet.dvita.com:20332 -s -X POST -d '{"jsonrpc": "2.0","method": "resolve","params":["@name123"],"id": 1}' | jq .result
+
+Response:
+{
+  "cname": "@name123",
+  "address": "NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY"
+}
+
+Register
+---
+
+Registers new canonical name to given address
+First param: canonical name as string,
+Second param: Address to add the canonical name to
+Third param: signer address
+
+Request body:
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "register",
+    "params": ["@name123","NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"]
+}
+
+Response body:
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "cname": "@name123",
+        "address": "0xfa4b61e682edc9a8a7393e6879ea4902ce816f54",
+        "txHash": "0x2e64f7f4b36bbf6764db1f404172ae3523193c9eb088b4cb9de18cb299ee7a07"
+    }
+}
+
+curl example:
+
+curl rpc.testnet.dvita.com:20332 -s -X POST -d '{"jsonrpc": "2.0","method": "register","params":["@name123","NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"],"id": 1}' | jq .result
+
+Response:
+{
+  "cname": "@name123",
+  "address": "0xfa4b61e682edc9a8a7393e6879ea4902ce816f54",
+  "txHash": "0x632cfbfd97355e2ada44fd072912efc7c06c8662d00bca857c8f4d8f67e8b675"
+}
+
+Unregister
+---
+Unregisters canonical name
+First param: canonical name as string,
+Second param: signer address
+
+Request body:
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "unregister",
+    "params": ["@name123","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"]
+}
+
+Response body:
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "cname": "@name123",
+        "txHash": "0xfd49cf514402998d432a6b84398bb7d6b92542cf55979bd8d6c38c109ccae8c6"
+    }
+}
+
+curl example:
+
+curl rpc.testnet.dvita.com:20332 -s -X POST -d '{"jsonrpc": "2.0","method": "unregister","params":["@name123","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"],"id": 1}' | jq .result
+
+Response:
+{
+  "cname": "@name123",
+  "txHash": "0xb4f63dce905f57eb7d841ecbee41e1898e4e97e18dd990fb61b8b093663b810a"
+}
