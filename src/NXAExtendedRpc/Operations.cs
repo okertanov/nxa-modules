@@ -34,7 +34,7 @@ namespace Nxa.Plugins
         /// <param name="gas">Max fee for running the script</param>
         public static JObject CreateSendTransaction(NeoSystem system, byte[] script, OperationWallet wallet, UInt160 account = null, long gas = TestModeGas)
         {
-            Signer[] signers = System.Array.Empty<Signer>();
+            var signers = System.Array.Empty<Signer>();
             var snapshot = system.StoreView;
 
             if (account != null)
@@ -47,9 +47,9 @@ namespace Nxa.Plugins
 
             try
             {
-                Transaction tx = wallet.MakeTransaction(snapshot, script, account, signers, maxGas: gas);
+                var tx = wallet.MakeTransaction(snapshot, script, account, signers, maxGas: gas);
 
-                using (ApplicationEngine engine = ApplicationEngine.Run(tx.Script, snapshot, container: tx, settings: system.Settings, gas: gas))
+                using (var engine = ApplicationEngine.Run(tx.Script, snapshot, container: tx, settings: system.Settings, gas: gas))
                 {
                     if (engine.State == VMState.FAULT)
                     {
@@ -75,7 +75,7 @@ namespace Nxa.Plugins
         /// <param name="gas">Max fee for running the script</param>
         public static JObject CreateTransaction(NeoSystem system, byte[] script, OperationWallet wallet, UInt160 account = null, long gas = TestModeGas)
         {
-            Signer[] signers = System.Array.Empty<Signer>();
+            var signers = System.Array.Empty<Signer>();
             var snapshot = system.StoreView;
 
             if (account != null)
@@ -88,7 +88,7 @@ namespace Nxa.Plugins
 
             try
             {
-                Transaction tx = wallet.MakeTransaction(snapshot, script, account, signers, maxGas: gas);
+                var tx = wallet.MakeTransaction(snapshot, script, account, signers, maxGas: gas);
 
                 return Utility.TransactionAndContextToJson(tx, system.Settings);
             }
@@ -166,15 +166,15 @@ namespace Nxa.Plugins
         public static bool Sign(NeoSystem system, ContractParametersContext context, OperationWallet wallet)
         {
             if (context.Network != system.Settings.Network) return false;
-            bool fSuccess = false;
-            foreach (UInt160 scriptHash in context.ScriptHashes)
+            var fSuccess = false;
+            foreach (var scriptHash in context.ScriptHashes)
             {
                 WalletAccount account = wallet.GetAccount(scriptHash);
 
                 if (account != null)
                 {
                     // Try to sign self-contained multiSig
-                    Contract multiSigContract = account.Contract;
+                    var multiSigContract = account.Contract;
 
                     if (multiSigContract != null &&
                         multiSigContract.Script.IsMultiSigContract(out int m, out ECPoint[] points))
@@ -183,8 +183,8 @@ namespace Nxa.Plugins
                         {
                             account = wallet.GetAccount(point);
                             if (account?.HasKey != true) continue;
-                            KeyPair key = account.GetKey();
-                            byte[] signature = context.Verifiable.Sign(key, context.Network);
+                            var key = account.GetKey();
+                            var signature = context.Verifiable.Sign(key, context.Network);
                             fSuccess |= context.AddSignature(multiSigContract, key.PublicKey, signature);
                             if (fSuccess) m--;
                             if (context.Completed || m <= 0) break;
@@ -194,8 +194,8 @@ namespace Nxa.Plugins
                     else if (account.HasKey)
                     {
                         // Try to sign with regular accounts
-                        KeyPair key = account.GetKey();
-                        byte[] signature = context.Verifiable.Sign(key, context.Network);
+                        var key = account.GetKey();
+                        var signature = context.Verifiable.Sign(key, context.Network);
                         fSuccess |= context.AddSignature(account.Contract, key.PublicKey, signature);
                         continue;
                     }
@@ -234,7 +234,7 @@ namespace Nxa.Plugins
         /// <returns>Return true if it was successful</returns>
         public static void OnInvokeWithResult(NeoSystem system, UInt160 scriptHash, string operation, out StackItem result, IVerifiable verificable = null, JArray contractParameters = null, bool showStack = true, long gas = TestModeGas)
         {
-            List<ContractParameter> parameters = new List<ContractParameter>();
+            var parameters = new List<ContractParameter>();
 
             if (contractParameters != null)
             {
@@ -244,7 +244,7 @@ namespace Nxa.Plugins
                 }
             }
 
-            ContractState contract = NativeContract.ContractManagement.GetContract(system.StoreView, scriptHash);
+            var contract = NativeContract.ContractManagement.GetContract(system.StoreView, scriptHash);
             if (contract == null)
             {
                 throw new RpcException(-500, "Contract does not exist.");
@@ -259,7 +259,7 @@ namespace Nxa.Plugins
 
             byte[] script;
 
-            using (ScriptBuilder scriptBuilder = new ScriptBuilder())
+            using (var scriptBuilder = new ScriptBuilder())
             {
                 scriptBuilder.EmitDynamicCall(scriptHash, operation, parameters.ToArray());
                 script = scriptBuilder.ToArray();
@@ -270,7 +270,7 @@ namespace Nxa.Plugins
                 tx.Script = script;
             }
 
-            using ApplicationEngine engine = ApplicationEngine.Run(script, system.StoreView, container: verificable, settings: system.Settings, gas: gas);
+            using var engine = ApplicationEngine.Run(script, system.StoreView, container: verificable, settings: system.Settings, gas: gas);
             result = engine.State == VMState.FAULT ? null : engine.ResultStack.Peek();
 
             if (engine.State == VMState.FAULT)
@@ -293,33 +293,33 @@ namespace Nxa.Plugins
         {
             try
             {
-                MemoryStream stream = new MemoryStream(nefImage);
-                BinaryReader reader = new BinaryReader(stream);
-                NefFile nefFile = new NefFile();
+                var stream = new MemoryStream(nefImage);
+                var reader = new BinaryReader(stream);
+                var nefFile = new NefFile();
                 nefFile.Deserialize(reader);
 
                 Console.WriteLine($"Deploying Smart Contract: '{manifest.Name}' compiled: '{nefFile.Compiler}'");
 
                 byte[] script;
-                using (ScriptBuilder sb = new ScriptBuilder())
+                using (var sb = new ScriptBuilder())
                 {
                     sb.EmitDynamicCall(NativeContract.ContractManagement.Hash, "deploy", nefFile.ToArray(), manifest.ToJson().ToString());
                     script = sb.ToArray();
                 }
-                UInt160 sender = Contract.CreateSignatureRedeemScript(keyPair.PublicKey).ToScriptHash();
-                Signer[] signers = new[] { new Signer { Scopes = WitnessScope.CalledByEntry, Account = sender } };
+                var sender = Contract.CreateSignatureRedeemScript(keyPair.PublicKey).ToScriptHash();
+                var signers = new[] { new Signer { Scopes = WitnessScope.CalledByEntry, Account = sender } };
 
                 var snapshot = system.StoreView;
                 var tx = wallet.MakeTransaction(snapshot, script, sender, signers, maxGas: TestModeGas);
 
-                UInt160 scriptHash = Neo.SmartContract.Helper.GetContractHash(tx.Sender, nefFile.CheckSum, manifest.Name);
+                var scriptHash = Neo.SmartContract.Helper.GetContractHash(tx.Sender, nefFile.CheckSum, manifest.Name);
 
-                var sent = SignAndSendTx(system, snapshot, tx, wallet, true);
+                var txHash = SignAndSendTx(system, snapshot, tx, wallet, true);
 
                 var res = new JObject();
                 res["scriptHash"] = $"{scriptHash}";
                 res["address"] = scriptHash.ToAddress(system.Settings.AddressVersion);
-                res["sent"] = sent;
+                res["txHash"] = txHash;
 
                 Console.WriteLine($"Deployed Smart Contract '{scriptHash}'.");
 
@@ -346,19 +346,19 @@ namespace Nxa.Plugins
         {
             try
             {
-                MemoryStream stream = new MemoryStream(nefImage);
-                BinaryReader reader = new BinaryReader(stream);
-                NefFile nefFile = new NefFile();
+                var stream = new MemoryStream(nefImage);
+                var reader = new BinaryReader(stream);
+                var nefFile = new NefFile();
                 nefFile.Deserialize(reader);
 
                 byte[] script;
-                using (ScriptBuilder sb = new ScriptBuilder())
+                using (var sb = new ScriptBuilder())
                 {
                     sb.EmitDynamicCall(NativeContract.ContractManagement.Hash, "deploy", nefFile.ToArray(), manifest.ToJson().ToString());
                     script = sb.ToArray();
                 }
 
-                Signer[] signers = System.Array.Empty<Signer>();
+                var signers = System.Array.Empty<Signer>();
                 var snapshot = system.StoreView;
                 if (account != null)
                 {
@@ -367,7 +367,7 @@ namespace Nxa.Plugins
                     .Select(p => new Signer() { Account = p.ScriptHash, Scopes = WitnessScope.CalledByEntry })
                     .ToArray();
                 }
-                Transaction tx = wallet.MakeTransaction(snapshot, script, account, signers, maxGas: gas);
+                var tx = wallet.MakeTransaction(snapshot, script, account, signers, maxGas: gas);
 
                 return Utility.TransactionAndContextToJson(tx, system.Settings);
 

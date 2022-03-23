@@ -174,6 +174,7 @@ namespace Nxa.Plugins
             return (s.Length % 4 == 0) && Regex.IsMatch(s, @"^[a-zA-Z0-9\+/]*={0,3}$", RegexOptions.None);
 
         }
+
         public static bool IsCNRAddress(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -187,6 +188,22 @@ namespace Nxa.Plugins
                 (input.Contains('@') && input.Contains('.'));
 
             return isCNRAddress;
+        }
+
+        public static IEnumerable<Exception> Flatten(this Exception ex)
+        {
+            var innerException = ex;
+            do
+            {
+                yield return innerException;
+                innerException = innerException.InnerException;
+            }
+            while (innerException != null);
+        }
+
+        public static string ToFlattenString(this Exception ex)
+        {
+            return String.Join(' ', ex.Flatten().Select(em => em.Message));
         }
     }
 }

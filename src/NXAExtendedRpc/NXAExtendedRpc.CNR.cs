@@ -1,17 +1,14 @@
 ﻿using Neo;
 using Neo.IO.Json;
-using Neo.Persistence;
 using Neo.Plugins;
 using Neo.SmartContract;
-using Neo.SmartContract.Native;
 using Neo.VM;
 using Neo.VM.Types;
 using Neo.Wallets;
 using Nxa.Plugins.HelperObjects;
 using System;
-using System.Numerics;
-using System.Security.Cryptography;
 using Neo.Network.P2P.Payloads;
+using System.Linq;
 
 namespace Nxa.Plugins
 {
@@ -25,7 +22,7 @@ namespace Nxa.Plugins
         [RpcMethod]
         protected virtual JObject Resolve(JArray _params)
         {
-            string cname = _params[0].AsString();
+            var cname = _params[0].AsString();
             var result = new JObject();
             result["cname"] = cname;
 
@@ -83,21 +80,20 @@ namespace Nxa.Plugins
                     script = scriptBuilder.ToArray();
                 }
 
-                UInt160 sender = Contract.CreateSignatureRedeemScript(keyPair.PublicKey).ToScriptHash();
-                Signer[] signers = new[] { new Signer { Scopes = WitnessScope.CalledByEntry, Account = sender } };
+                var sender = Contract.CreateSignatureRedeemScript(keyPair.PublicKey).ToScriptHash();
+                var signers = new[] { new Signer { Scopes = WitnessScope.CalledByEntry, Account = sender } };
 
                 var snapshot = system.StoreView;
                 var tx = wallet.MakeTransaction(snapshot, script, sender, signers, maxGas: TestModeGas);
 
-                var sent = Operations.SignAndSendTx(system, snapshot, tx, wallet, true);
-
-                result["sent"] = sent;
+                var txHash = Operations.SignAndSendTx(system, snapshot, tx, wallet, true);
+                result["txHash"] = txHash;
 
                 return true;
             }
             catch (Exception e)
             {
-                result["error"] = $"Error: {e.Message}: {e.StackTrace}.";
+                result["error"] = $"Error: {e.ToFlattenString()}: {e.StackTrace}";
             }
 
             return false;
@@ -142,19 +138,17 @@ namespace Nxa.Plugins
                     script = scriptBuilder.ToArray();
                 }
                 
-                UInt160 sender = Contract.CreateSignatureRedeemScript(keyPair.PublicKey).ToScriptHash();
-                Signer[] signers = new[] { new Signer { Scopes = WitnessScope.CalledByEntry, Account = sender } };
+                var sender = Contract.CreateSignatureRedeemScript(keyPair.PublicKey).ToScriptHash();
+                var signers = new[] { new Signer { Scopes = WitnessScope.CalledByEntry, Account = sender } };
 
                 var snapshot = system.StoreView;
                 var tx = wallet.MakeTransaction(snapshot, script, sender, signers, maxGas: TestModeGas);
-
-                var sent = Operations.SignAndSendTx(system, snapshot, tx, wallet, true);
-
-                result["sent"] = sent;
+                var txHash = Operations.SignAndSendTx(system, snapshot, tx, wallet, true);
+                result["txHash"] = txHash;
             }
             catch (Exception e)
             {
-                result["error"] = $"Error: {e.Message}: {e.StackTrace}.";
+                result["error"] = $"Error: {e.ToFlattenString()}: {e.StackTrace}";
             }
         }
 
@@ -185,7 +179,7 @@ namespace Nxa.Plugins
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine($"Error: {e.Message}: {e.StackTrace}.");
+                Console.Error.WriteLine($"Error: {e.ToFlattenString()}: {e.StackTrace}");
             }
 
             Console.Error.WriteLine($"CNR for: {cname} failed.");
