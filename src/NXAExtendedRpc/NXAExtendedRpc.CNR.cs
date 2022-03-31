@@ -9,6 +9,7 @@ using Nxa.Plugins.HelperObjects;
 using System;
 using Neo.Network.P2P.Payloads;
 using System.Linq;
+using Neo.Cryptography.ECC;
 
 namespace Nxa.Plugins
 {
@@ -32,7 +33,7 @@ namespace Nxa.Plugins
                 var address = resolved?.ToAddress(system.Settings.AddressVersion) ?? "<unknown address>";
                 result["address"] = address;
             }
-            else 
+            else
             {
                 result["error"] = "Input value is invalid - it should be either email or alphanumeric value ending with .id.dvita.com";
             }
@@ -137,7 +138,7 @@ namespace Nxa.Plugins
                     scriptBuilder.EmitDynamicCall(scriptHash, "unregister", cname);
                     script = scriptBuilder.ToArray();
                 }
-                
+
                 var sender = Contract.CreateSignatureRedeemScript(keyPair.PublicKey).ToScriptHash();
                 var signers = new[] { new Signer { Scopes = WitnessScope.CalledByEntry, Account = sender } };
 
@@ -184,6 +185,55 @@ namespace Nxa.Plugins
 
             Console.Error.WriteLine($"CNR for: {cname} failed.");
             return null;
+        }
+
+        /// <summary>
+        /// Create register transaction
+        /// </summary>
+        [RpcMethod]
+        protected virtual JObject CreateRegisterTx(JArray _params)
+        {
+            var cname = _params[0].AsString();
+            var address = _params[1].ToScriptHash(system.Settings);
+            var publicKey = _params[2].AsString();
+
+            var pubKey = ECPoint.Parse(publicKey, ECCurve.Secp256r1);
+            var account = new OperationAccount(pubKey, system.Settings);
+            var wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
+            byte[] script;
+
+            using (var scriptBuilder = new ScriptBuilder())
+            {
+                var scriptHash = scriptHashStr.ToScriptHash(system.Settings.AddressVersion);
+                scriptBuilder.EmitDynamicCall(scriptHash, "register", cname, address);
+                script = scriptBuilder.ToArray();
+            }
+
+            return Operations.CreateTransaction(system: system, script: script, wallet: wallet, account: account.ScriptHash);
+        }
+
+        /// <summary>
+        /// Create unregister transaction
+        /// </summary>
+        [RpcMethod]
+        protected virtual JObject CreateUnregisterTx(JArray _params)
+        {
+            var cname = _params[0].AsString();
+            var publicKey = _params[1].AsString();
+
+            var pubKey = ECPoint.Parse(publicKey, ECCurve.Secp256r1);
+            var account = new OperationAccount(pubKey, system.Settings);
+            var wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
+            byte[] script;
+
+            using (var scriptBuilder = new ScriptBuilder())
+            {
+                var scriptHash = scriptHashStr.ToScriptHash(system.Settings.AddressVersion);
+                scriptBuilder.EmitDynamicCall(scriptHash, "unregister", cname);
+                script = scriptBuilder.ToArray();
+            }
+
+            return Operations.CreateTransaction(system: system, script: script, wallet: wallet, account: account.ScriptHash);
         }
     }
 }

@@ -552,44 +552,47 @@ Response body:
     }
 
 Canonical Name Resolution
-================
+=========================
 
 Resolve
----
+-------
 
 Resolves canonical name to according address.
-Param: canonical name as string
+Param: canonical name as string 
 
 Request body:
-{
-    "jsonrpc": "2.0",
-    "id": 2,
-    "method": "resolve",
-    "params": ["@name123"]
-}
+
+    {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "resolve",
+        "params": ["@name123"]
+    }
 
 Response body:
-{
-    "jsonrpc": "2.0",
-    "id": 2,
-    "result": {
-        "cname": "@name123",
-        "address": "NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY"
+
+    {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+            "cname": "@name123",
+            "address": "NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY"
+        }
     }
-}
 
 curl example:
 
-curl rpc.testnet.dvita.com:20332 -s -X POST -d '{"jsonrpc": "2.0","method": "resolve","params":["@name123"],"id": 1}' | jq .result
+    curl rpc.testnet.dvita.com:20332 -s -X POST -d '{"jsonrpc": "2.0","method": "resolve","params":["@name123"],"id": 1}' | jq .result
 
 Response:
-{
-  "cname": "@name123",
-  "address": "NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY"
-}
+
+    {
+      "cname": "@name123",
+      "address": "NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY"
+    }
 
 Register
----
+--------
 
 Registers new canonical name to given address
 First param: canonical name as string,
@@ -597,65 +600,220 @@ Second param: Address to add the canonical name to
 Third param: signer address
 
 Request body:
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "register",
-    "params": ["@name123","NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"]
-}
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "register",
+        "params": ["@name123","NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"]
+    }
 
 Response body:
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "result": {
-        "cname": "@name123",
-        "address": "0xfa4b61e682edc9a8a7393e6879ea4902ce816f54",
-        "txHash": "0x2e64f7f4b36bbf6764db1f404172ae3523193c9eb088b4cb9de18cb299ee7a07"
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "cname": "@name123",
+            "address": "0xfa4b61e682edc9a8a7393e6879ea4902ce816f54",
+            "txHash": "0x2e64f7f4b36bbf6764db1f404172ae3523193c9eb088b4cb9de18cb299ee7a07"
+        }
     }
-}
 
 curl example:
 
-curl rpc.testnet.dvita.com:20332 -s -X POST -d '{"jsonrpc": "2.0","method": "register","params":["@name123","NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"],"id": 1}' | jq .result
+    curl rpc.testnet.dvita.com:20332 -s -X POST -d '{"jsonrpc": "2.0","method": "register","params":["@name123","NTcRXWqsRbR3XqtZWWVunxV7CGph27dMAY","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"],"id": 1}' | jq .result
 
 Response:
-{
-  "cname": "@name123",
-  "address": "0xfa4b61e682edc9a8a7393e6879ea4902ce816f54",
-  "txHash": "0x632cfbfd97355e2ada44fd072912efc7c06c8662d00bca857c8f4d8f67e8b675"
-}
+
+    {
+      "cname": "@name123",
+      "address": "0xfa4b61e682edc9a8a7393e6879ea4902ce816f54",
+      "txHash": "0x632cfbfd97355e2ada44fd072912efc7c06c8662d00bca857c8f4d8f67e8b675"
+    }
 
 Unregister
----
+----------
 Unregisters canonical name
 First param: canonical name as string,
 Second param: signer address
 
 Request body:
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "unregister",
-    "params": ["@name123","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"]
-}
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "unregister",
+        "params": ["@name123","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"]
+    }
 
 Response body:
-{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "result": {
-        "cname": "@name123",
-        "txHash": "0xfd49cf514402998d432a6b84398bb7d6b92542cf55979bd8d6c38c109ccae8c6"
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "cname": "@name123",
+            "txHash": "0xfd49cf514402998d432a6b84398bb7d6b92542cf55979bd8d6c38c109ccae8c6"
+        }
     }
-}
 
 curl example:
 
-curl rpc.testnet.dvita.com:20332 -s -X POST -d '{"jsonrpc": "2.0","method": "unregister","params":["@name123","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"],"id": 1}' | jq .result
+    curl rpc.testnet.dvita.com:20332 -s -X POST -d '{"jsonrpc": "2.0","method": "unregister","params":["@name123","L26KYxNcUjcWUAic8UoX9GKuVAZRmuJvbaCjQbULRN8mLCX6tft5"],"id": 1}' | jq .result
 
 Response:
-{
-  "cname": "@name123",
-  "txHash": "0xb4f63dce905f57eb7d841ecbee41e1898e4e97e18dd990fb61b8b093663b810a"
-}
+
+    {
+      "cname": "@name123",
+      "txHash": "0xb4f63dce905f57eb7d841ecbee41e1898e4e97e18dd990fb61b8b093663b810a"
+    }
+
+CreateRegisterTx
+----------------
+Create transaction for registering a canonical name to an address
+First param: canonical name
+Second param: address to add the canonical name to
+Third param: public key
+
+Request body:
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "createregistertx",
+        "params": ["@name1234","NZJsKhsKzi9ipzjC57zU53EVMC97zqPDKG","02ed27360f4d91c123785c1114c20a8b95db43229a933411538968292189124ff4"]
+    }
+
+Response body:
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "tx": {
+                "hash": "0xbfa4c0a7001659c176a54c6dbda7d8aa86bd64ca8a915e6af758e720dd5c1278",
+                "size": 123,
+                "version": 0,
+                "nonce": 599093283,
+                "sender": "NZJsKhsKzi9ipzjC57zU53EVMC97zqPDKG",
+                "sysfee": "6754950",
+                "netfee": "1214520",
+                "validuntilblock": 440632,
+                "signers": [
+                    {
+                        "account": "0x4ded38d56567184bd9872d1e0e464985e44eee92",
+                        "scopes": "CalledByEntry"
+                    }
+                ],
+                "attributes": [],
+                "script": "DBSS7k7khUlGDh4th9lLGGdl1TjtTQwJQG5hbWUxMjM0EsAfDAhyZWdpc3RlcgwUa0b4D+QqSye3q/hAo5/dafABeClBYn1bUg==",
+                "witnesses": []
+            },
+            "base64txjson": "eyJoYXNoIjoiMHhiZmE0YzBhNzAwMTY1OWMxNzZhNTRjNmRiZGE3ZDhhYTg2YmQ2NGNhOGE5MTVlNmFmNzU4ZTcyMGRkNWMxMjc4Iiwic2l6ZSI6MTIzLCJ2ZXJzaW9uIjowLCJub25jZSI6NTk5MDkzMjgzLCJzZW5kZXIiOiJOWkpzS2hzS3ppOWlwempDNTd6VTUzRVZNQzk3enFQREtHIiwic3lzZmVlIjoiNjc1NDk1MCIsIm5ldGZlZSI6IjEyMTQ1MjAiLCJ2YWxpZHVudGlsYmxvY2siOjQ0MDYzMiwic2lnbmVycyI6W3siYWNjb3VudCI6IjB4NGRlZDM4ZDU2NTY3MTg0YmQ5ODcyZDFlMGU0NjQ5ODVlNDRlZWU5MiIsInNjb3BlcyI6IkNhbGxlZEJ5RW50cnkifV0sImF0dHJpYnV0ZXMiOltdLCJzY3JpcHQiOiJEQlNTN2s3a2hVbEdEaDR0aDlsTEdHZGwxVGp0VFF3SlFHNWhiV1V4TWpNMEVzQWZEQWh5WldkcGMzUmxjZ3dVYTBiNERcdTAwMkJRcVN5ZTNxL2hBbzUvZGFmQUJlQ2xCWW4xYlVnPT0iLCJ3aXRuZXNzZXMiOltdfQ=="
+        }
+    }
+
+curl example:
+
+    curl localhost:20332 -s -X POST -d '{"jsonrpc": "2.0","method": "createregistertx","params":["@name1234", "NZJsKhsKzi9ipzjC57zU53EVMC97zqPDKG", "02ed27360f4d91c123785c1114c20a8b95db43229a933411538968292189124ff4"],"id": 1}' | jq .result
+
+Response:
+
+    {
+      "tx": {
+        "hash": "0xb407eee687d5446035fd1a05980def18f6b7d8b024b3fe6bdc04e1ea3eba38c6",
+        "size": 123,
+        "version": 0,
+        "nonce": 882755443,
+        "sender": "NZJsKhsKzi9ipzjC57zU53EVMC97zqPDKG",
+        "sysfee": "6754950",
+        "netfee": "1214520",
+        "validuntilblock": 440670,
+        "signers": [
+          {
+            "account": "0x4ded38d56567184bd9872d1e0e464985e44eee92",
+            "scopes": "CalledByEntry"
+          }
+        ],
+        "attributes": [],
+        "script": "DBSS7k7khUlGDh4th9lLGGdl1TjtTQwJQG5hbWUxMjM0EsAfDAhyZWdpc3RlcgwUa0b4D+QqSye3q/hAo5/dafABeClBYn1bUg==",
+        "witnesses": []
+      },
+      "base64txjson": "eyJoYXNoIjoiMHhiNDA3ZWVlNjg3ZDU0NDYwMzVmZDFhMDU5ODBkZWYxOGY2YjdkOGIwMjRiM2ZlNmJkYzA0ZTFlYTNlYmEzOGM2Iiwic2l6ZSI6MTIzLCJ2ZXJzaW9uIjowLCJub25jZSI6ODgyNzU1NDQzLCJzZW5kZXIiOiJOWkpzS2hzS3ppOWlwempDNTd6VTUzRVZNQzk3enFQREtHIiwic3lzZmVlIjoiNjc1NDk1MCIsIm5ldGZlZSI6IjEyMTQ1MjAiLCJ2YWxpZHVudGlsYmxvY2siOjQ0MDY3MCwic2lnbmVycyI6W3siYWNjb3VudCI6IjB4NGRlZDM4ZDU2NTY3MTg0YmQ5ODcyZDFlMGU0NjQ5ODVlNDRlZWU5MiIsInNjb3BlcyI6IkNhbGxlZEJ5RW50cnkifV0sImF0dHJpYnV0ZXMiOltdLCJzY3JpcHQiOiJEQlNTN2s3a2hVbEdEaDR0aDlsTEdHZGwxVGp0VFF3SlFHNWhiV1V4TWpNMEVzQWZEQWh5WldkcGMzUmxjZ3dVYTBiNERcdTAwMkJRcVN5ZTNxL2hBbzUvZGFmQUJlQ2xCWW4xYlVnPT0iLCJ3aXRuZXNzZXMiOltdfQ=="
+    }
+
+
+CreateUnregisterTx
+----------------
+Create transaction for unregistering a canonical name from an address
+First param: canonical name
+Second param: public key
+
+Request body:
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "createunregistertx",
+        "params": ["@name123","02ed27360f4d91c123785c1114c20a8b95db43229a933411538968292189124ff4"]
+    }
+    
+Response body
+
+    {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "tx": {
+                "hash": "0x3659da374eb3591c702ab4d3374f66ff40a9bfd6be91aacd4d5bf294234ae3b0",
+                "size": 102,
+                "version": 0,
+                "nonce": 712992494,
+                "sender": "NZJsKhsKzi9ipzjC57zU53EVMC97zqPDKG",
+                "sysfee": "3754440",
+                "netfee": "1193520",
+                "validuntilblock": 440641,
+                "signers": [
+                    {
+                        "account": "0x4ded38d56567184bd9872d1e0e464985e44eee92",
+                        "scopes": "CalledByEntry"
+                    }
+                ],
+                "attributes": [],
+                "script": "DAhAbmFtZTEyMxHAHwwKdW5yZWdpc3RlcgwUa0b4D+QqSye3q/hAo5/dafABeClBYn1bUg==",
+                "witnesses": []
+            },
+            "base64txjson": "eyJoYXNoIjoiMHgzNjU5ZGEzNzRlYjM1OTFjNzAyYWI0ZDMzNzRmNjZmZjQwYTliZmQ2YmU5MWFhY2Q0ZDViZjI5NDIzNGFlM2IwIiwic2l6ZSI6MTAyLCJ2ZXJzaW9uIjowLCJub25jZSI6NzEyOTkyNDk0LCJzZW5kZXIiOiJOWkpzS2hzS3ppOWlwempDNTd6VTUzRVZNQzk3enFQREtHIiwic3lzZmVlIjoiMzc1NDQ0MCIsIm5ldGZlZSI6IjExOTM1MjAiLCJ2YWxpZHVudGlsYmxvY2siOjQ0MDY0MSwic2lnbmVycyI6W3siYWNjb3VudCI6IjB4NGRlZDM4ZDU2NTY3MTg0YmQ5ODcyZDFlMGU0NjQ5ODVlNDRlZWU5MiIsInNjb3BlcyI6IkNhbGxlZEJ5RW50cnkifV0sImF0dHJpYnV0ZXMiOltdLCJzY3JpcHQiOiJEQWhBYm1GdFpURXlNeEhBSHd3S2RXNXlaV2RwYzNSbGNnd1VhMGI0RFx1MDAyQlFxU3llM3EvaEFvNS9kYWZBQmVDbEJZbjFiVWc9PSIsIndpdG5lc3NlcyI6W119"
+        }
+    }
+
+curl example:
+
+    curl localhost:20332 -s -X POST -d '{"jsonrpc": "2.0","method": "createunregistertx","params":["@name123", "02ed27360f4d91c123785c1114c20a8b95db43229a933411538968292189124ff4"],"id": 1}' | jq .result
+
+Response:
+
+    {
+      "tx": {
+        "hash": "0x14303b42ea1974a7e80f2602dc3b7f58a202c0e8b7d849f6bb4923ed4ae7c64e",
+        "size": 102,
+        "version": 0,
+        "nonce": 572588883,
+        "sender": "NZJsKhsKzi9ipzjC57zU53EVMC97zqPDKG",
+        "sysfee": "3754440",
+        "netfee": "1193520",
+        "validuntilblock": 440677,
+        "signers": [
+          {
+            "account": "0x4ded38d56567184bd9872d1e0e464985e44eee92",
+            "scopes": "CalledByEntry"
+          }
+        ],
+        "attributes": [],
+        "script": "DAhAbmFtZTEyMxHAHwwKdW5yZWdpc3RlcgwUa0b4D+QqSye3q/hAo5/dafABeClBYn1bUg==",
+        "witnesses": []
+      },
+      "base64txjson": "eyJoYXNoIjoiMHgxNDMwM2I0MmVhMTk3NGE3ZTgwZjI2MDJkYzNiN2Y1OGEyMDJjMGU4YjdkODQ5ZjZiYjQ5MjNlZDRhZTdjNjRlIiwic2l6ZSI6MTAyLCJ2ZXJzaW9uIjowLCJub25jZSI6NTcyNTg4ODgzLCJzZW5kZXIiOiJOWkpzS2hzS3ppOWlwempDNTd6VTUzRVZNQzk3enFQREtHIiwic3lzZmVlIjoiMzc1NDQ0MCIsIm5ldGZlZSI6IjExOTM1MjAiLCJ2YWxpZHVudGlsYmxvY2siOjQ0MDY3Nywic2lnbmVycyI6W3siYWNjb3VudCI6IjB4NGRlZDM4ZDU2NTY3MTg0YmQ5ODcyZDFlMGU0NjQ5ODVlNDRlZWU5MiIsInNjb3BlcyI6IkNhbGxlZEJ5RW50cnkifV0sImF0dHJpYnV0ZXMiOltdLCJzY3JpcHQiOiJEQWhBYm1GdFpURXlNeEhBSHd3S2RXNXlaV2RwYzNSbGNnd1VhMGI0RFx1MDAyQlFxU3llM3EvaEFvNS9kYWZBQmVDbEJZbjFiVWc9PSIsIndpdG5lc3NlcyI6W119"
+    }
+

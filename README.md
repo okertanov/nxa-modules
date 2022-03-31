@@ -3,9 +3,9 @@ NXA Core Modules
 
 NXABlockListener
 ================
-https://gitlab.teamxi.cloud/nxa/nxa-modules/-/blob/master/src/NXABlockListener
+https://gitlab.team11.lv/nxa/nxa-modules/-/blob/master/src/NXABlockListener
 
 NXAExtendedRpc
 ================
 
-https://gitlab.teamxi.cloud/nxa/nxa-modules/-/tree/master/src/NXAExtendedRpc
+https://gitlab.team11.lv/nxa/nxa-modules/-/tree/master/src/NXAExtendedRpc
