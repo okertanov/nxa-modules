@@ -183,7 +183,7 @@ namespace Nxa.Plugins
             }
 
             bool isCNRAddress =
-                Regex.Match(input, @"^[a-zA-Z0-9]*\.(id.dvita.com)$").Success ||
+                Regex.Match(input, @"^[a-zA-Z0-9_\.-]*\.(id.dvita.com)$").Success ||
                 input.StartsWith('@') ||
                 (input.Contains('@') && input.Contains('.'));
 
