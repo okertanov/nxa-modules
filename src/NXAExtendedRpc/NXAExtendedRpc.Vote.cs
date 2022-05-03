@@ -28,12 +28,12 @@ namespace Nxa.Plugins
             OperationAccount account = new OperationAccount(key, system.Settings);
             OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
 
-            var testGas = NativeContract.DVITA.GetRegisterPrice(system.StoreView) + (BigInteger)Math.Pow(10, NativeContract.GAS.Decimals) * 10;
+            var testGas = NativeContract.NEO.GetRegisterPrice(system.StoreView) + (BigInteger)Math.Pow(10, NativeContract.GAS.Decimals) * 10;
 
             byte[] script;
             using (ScriptBuilder scriptBuilder = new ScriptBuilder())
             {
-                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "registerCandidate", key.PublicKey);
+                scriptBuilder.EmitDynamicCall(NativeContract.NEO.Hash, "registerCandidate", key.PublicKey);
                 script = scriptBuilder.ToArray();
             }
 
@@ -50,12 +50,12 @@ namespace Nxa.Plugins
             OperationAccount account = new OperationAccount(pubKey, system.Settings);
             OperationWallet wallet = new OperationWallet(system.Settings, new OperationAccount[] { account });
 
-            var testGas = NativeContract.DVITA.GetRegisterPrice(system.StoreView) + (BigInteger)Math.Pow(10, NativeContract.GAS.Decimals) * 10;
+            var testGas = NativeContract.NEO.GetRegisterPrice(system.StoreView) + (BigInteger)Math.Pow(10, NativeContract.GAS.Decimals) * 10;
 
             byte[] script;
             using (ScriptBuilder scriptBuilder = new ScriptBuilder())
             {
-                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "registerCandidate", pubKey);
+                scriptBuilder.EmitDynamicCall(NativeContract.NEO.Hash, "registerCandidate", pubKey);
                 script = scriptBuilder.ToArray();
             }
 
@@ -75,7 +75,7 @@ namespace Nxa.Plugins
             byte[] script;
             using (ScriptBuilder scriptBuilder = new ScriptBuilder())
             {
-                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "unregisterCandidate", key.PublicKey);
+                scriptBuilder.EmitDynamicCall(NativeContract.NEO.Hash, "unregisterCandidate", key.PublicKey);
                 script = scriptBuilder.ToArray();
             }
 
@@ -95,7 +95,7 @@ namespace Nxa.Plugins
             byte[] script;
             using (ScriptBuilder scriptBuilder = new ScriptBuilder())
             {
-                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "unregisterCandidate", pubKey);
+                scriptBuilder.EmitDynamicCall(NativeContract.NEO.Hash, "unregisterCandidate", pubKey);
                 script = scriptBuilder.ToArray();
             }
 
@@ -118,7 +118,7 @@ namespace Nxa.Plugins
             byte[] script;
             using (ScriptBuilder scriptBuilder = new ScriptBuilder())
             {
-                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "vote", account.ScriptHash, pubKey);
+                scriptBuilder.EmitDynamicCall(NativeContract.NEO.Hash, "vote", account.ScriptHash, pubKey);
                 script = scriptBuilder.ToArray();
             }
 
@@ -140,7 +140,7 @@ namespace Nxa.Plugins
             byte[] script;
             using (ScriptBuilder scriptBuilder = new ScriptBuilder())
             {
-                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "vote", account.ScriptHash, voteForPubKey);
+                scriptBuilder.EmitDynamicCall(NativeContract.NEO.Hash, "vote", account.ScriptHash, voteForPubKey);
                 script = scriptBuilder.ToArray();
             }
 
@@ -160,7 +160,7 @@ namespace Nxa.Plugins
             byte[] script;
             using (ScriptBuilder scriptBuilder = new ScriptBuilder())
             {
-                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "vote", account.ScriptHash, null);
+                scriptBuilder.EmitDynamicCall(NativeContract.NEO.Hash, "vote", account.ScriptHash, null);
                 script = scriptBuilder.ToArray();
             }
 
@@ -180,7 +180,7 @@ namespace Nxa.Plugins
             byte[] script;
             using (ScriptBuilder scriptBuilder = new ScriptBuilder())
             {
-                scriptBuilder.EmitDynamicCall(NativeContract.DVITA.Hash, "vote", account.ScriptHash, null);
+                scriptBuilder.EmitDynamicCall(NativeContract.NEO.Hash, "vote", account.ScriptHash, null);
                 script = scriptBuilder.ToArray();
             }
 
@@ -199,7 +199,7 @@ namespace Nxa.Plugins
             arg["type"] = "Hash160";
             arg["value"] = address.ToScriptHash(system.Settings.AddressVersion).ToString();
 
-            Operations.OnInvokeWithResult(system, NativeContract.DVITA.Hash, "getAccountState", out StackItem resultStack, null, new JArray(arg));
+            Operations.OnInvokeWithResult(system, NativeContract.NEO.Hash, "getAccountState", out StackItem resultStack, null, new JArray(arg));
 
             var resJArray = (Neo.VM.Types.Array)resultStack;
             foreach (StackItem value in resJArray)
@@ -213,7 +213,7 @@ namespace Nxa.Plugins
 
             JObject result = new JObject();
             result["voted"] = Contract.CreateSignatureRedeemScript(publickey).ToScriptHash().ToAddress(system.Settings.AddressVersion);
-            result["amount"] = new BigDecimal(((Integer)resJArray?[0]).GetInteger(), NativeContract.DVITA.Decimals).ToString();
+            result["amount"] = new BigDecimal(((Integer)resJArray?[0]).GetInteger(), NativeContract.NEO.Decimals).ToString();
             result["block"] = ((Integer)resJArray?[1]).GetInteger().ToString();
 
             return result;
@@ -222,7 +222,7 @@ namespace Nxa.Plugins
         [RpcMethod]
         protected virtual JObject GetCandidates(JArray _params)
         {
-            Operations.OnInvokeWithResult(system, NativeContract.DVITA.Hash, "getCandidates", out StackItem resultStack, null, null, false);
+            Operations.OnInvokeWithResult(system, NativeContract.NEO.Hash, "getCandidates", out StackItem resultStack, null, null, false);
 
             var resJArray = (Neo.VM.Types.Array)resultStack;
 
@@ -233,7 +233,7 @@ namespace Nxa.Plugins
                 {
                     var value = (Neo.VM.Types.Array)item;
                     JObject candidate = new JObject();
-                    candidate["DVITA"] = ((Integer)value?[1]).GetInteger().ToString();
+                    candidate["NEO"] = ((Integer)value?[1]).GetInteger().ToString();
                     candidate["PubKey"] = (((ByteString)value?[0])?.GetSpan().ToHexString()).ToString();
                     candidates.Add(candidate);
 

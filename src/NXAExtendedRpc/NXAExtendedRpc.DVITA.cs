@@ -22,8 +22,8 @@ namespace Nxa.Plugins
             UInt160 asset_id;
             switch (_params[1].AsString())
             {
-                case "DVITA":
-                    asset_id = NativeContract.DVITA.Hash;
+                case "NEO":
+                    asset_id = NativeContract.NEO.Hash;
                     break;
                 case "GAS":
                     asset_id = NativeContract.GAS.Hash;
