@@ -312,7 +312,8 @@ namespace Nxa.Plugins
                     if (deployPayloadData is null) {
                         sb.EmitDynamicCall(NativeContract.ContractManagement.Hash, "deploy", nefFile.ToArray(), manifest.ToJson().ToString());
                     } else {
-                        sb.EmitDynamicCall(NativeContract.ContractManagement.Hash, "deploy", nefFile.ToArray(), manifest.ToJson().ToString(), deployPayloadData);
+                        var deployPayloadDataParams = ContractParameter.FromJson(deployPayloadData);
+                        sb.EmitDynamicCall(NativeContract.ContractManagement.Hash, "deploy", nefFile.ToArray(), manifest.ToJson().ToString(), deployPayloadDataParams);
                     }
                     script = sb.ToArray();
                 }
