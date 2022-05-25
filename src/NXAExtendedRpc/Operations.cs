@@ -289,7 +289,13 @@ namespace Nxa.Plugins
         /// <param name="nefImage">nef image</param>
         /// <param name="manifest">manifest</param>
         /// <returns>Return jobject with SC script hash</returns>
-        public static JObject DeploySmartContract(NeoSystem system, OperationWallet wallet, KeyPair keyPair, byte[] nefImage, ContractManifest manifest)
+        public static JObject DeploySmartContract(
+            NeoSystem system,
+            OperationWallet wallet,
+            KeyPair keyPair,
+            byte[] nefImage,
+            ContractManifest manifest,
+            JObject deployPayloadData = null)
         {
             try
             {
@@ -303,7 +309,11 @@ namespace Nxa.Plugins
                 byte[] script;
                 using (var sb = new ScriptBuilder())
                 {
-                    sb.EmitDynamicCall(NativeContract.ContractManagement.Hash, "deploy", nefFile.ToArray(), manifest.ToJson().ToString());
+                    if (deployPayloadData is null) {
+                        sb.EmitDynamicCall(NativeContract.ContractManagement.Hash, "deploy", nefFile.ToArray(), manifest.ToJson().ToString());
+                    } else {
+                        sb.EmitDynamicCall(NativeContract.ContractManagement.Hash, "deploy", nefFile.ToArray(), manifest.ToJson().ToString(), deployPayloadData);
+                    }
                     script = sb.ToArray();
                 }
                 var sender = Contract.CreateSignatureRedeemScript(keyPair.PublicKey).ToScriptHash();

@@ -37,7 +37,18 @@ namespace Nxa.Plugins
             var manifestJson = JObject.Parse(manifestStr);
             var manifest = ContractManifest.FromJson(manifestJson);
 
-            return Operations.DeploySmartContract(system: system, wallet: wallet, keyPair: keyPair, nefImage: nefImage, manifest: manifest);
+            var deployPayloadData = _params.Count > 3 ? _params[3] : null;
+
+            var resultJObject = Operations.DeploySmartContract(
+                system: system,
+                wallet: wallet,
+                keyPair: keyPair,
+                nefImage: nefImage,
+                manifest: manifest,
+                deployPayloadData
+        )   ;
+
+            return resultJObject;
         }
 
         [RpcMethod]
